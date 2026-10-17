@@ -38,24 +38,27 @@ const GRADIENTS = [
 type ProductForm = {
   nameAr: string; nameEn: string; descAr: string; descEn: string
   price: string; oldPrice: string; stock: string
-  category: string; emoji: string; gradient: string
+  category: string; kind: 'product' | 'service'
+  emoji: string; gradient: string
   badgeAr: string; badgeEn: string; isBestSeller: boolean
 }
 
 const EMPTY_FORM: ProductForm = {
   nameAr: '', nameEn: '', descAr: '', descEn: '',
   price: '', oldPrice: '', stock: '20',
-  category: 'general', emoji: '🛍️', gradient: GRADIENTS[0].v,
+  category: 'general', kind: 'product', emoji: '🛍️', gradient: GRADIENTS[0].v,
   badgeAr: '', badgeEn: '', isBestSeller: false,
 }
 
 function formFromProduct(p: Product): ProductForm {
+  const kind = p.kind === 'service' ? 'service' : 'product'
   return {
     nameAr: p.nameAr, nameEn: p.nameEn,
     descAr: p.descAr === p.nameAr ? '' : p.descAr,
     descEn: p.descEn === p.nameEn ? '' : p.descEn,
     price: String(p.price), oldPrice: p.oldPrice ? String(p.oldPrice) : '',
-    stock: String(p.stock), category: p.category, emoji: p.emoji,
+    stock: String(p.stock), category: p.category, kind,
+    emoji: p.emoji,
     gradient: p.gradient, badgeAr: p.badgeAr ?? '', badgeEn: p.badgeEn ?? '',
     isBestSeller: p.isBestSeller,
   }
@@ -117,7 +120,8 @@ function ProductDialog({
         price: Number(form.price),
         // send 0 when cleared so the server nulls it (allows removing an old price)
         oldPrice: form.oldPrice ? Number(form.oldPrice) : 0,
-        stock: Number(form.stock) || 0,
+        // services are capacity-based — the server assigns 999; hide stock for them
+        stock: form.kind === 'service' ? 999 : (Number(form.stock) || 0),
         // ordered gallery — first entry is the main display image
         image: imageUrls[0] ?? '',
         images: imageUrls.slice(1),
@@ -200,11 +204,36 @@ function ProductDialog({
               <Input type="number" min="0" step="0.001" value={form.oldPrice}
                 onChange={(e) => set('oldPrice', e.target.value)} className="rounded-xl" />
             </div>
-            <div className="space-y-1.5">
-              <Label>{d.stock[lang]}</Label>
-              <Input type="number" min="0" value={form.stock}
-                onChange={(e) => set('stock', e.target.value)} className="rounded-xl" />
-            </div>
+            {form.kind === 'service' ? (
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground">{d.stockService[lang]}</Label>
+                <div className="h-10 rounded-xl border border-dashed border-border bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground px-2 text-center">
+                  {lang === 'ar' ? 'الحجز مفتوح' : 'Open for booking'}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>{d.stock[lang]}</Label>
+                <Input type="number" min="0" value={form.stock}
+                  onChange={(e) => set('stock', e.target.value)} className="rounded-xl" />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{d.kindField[lang]}</Label>
+            <select
+              value={form.kind}
+              onChange={(e) => {
+                const kind = e.target.value as 'product' | 'service'
+                setForm((f) => ({ ...f, kind, emoji: kind === 'service' && f.emoji === '🛍️' ? '🛠️' : f.emoji }))
+              }}
+              className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+            >
+              <option value="product">{d.kindProduct[lang]}</option>
+              <option value="service">{d.kindService[lang]}</option>
+            </select>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{d.kindHint[lang]}</p>
           </div>
 
           <div className="space-y-1.5">
