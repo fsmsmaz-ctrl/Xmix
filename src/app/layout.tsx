@@ -4,10 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://xmix.om"),
-  title: "Xmix — سوق المنتجات والخدمات الزراعية | Xmix Agri Marketplace",
+  title: "Xmix — سوق التجارة العام: محلات ومنتجات وخدمات وتوصيل | Xmix Marketplace",
   description:
-    "Xmix السوق الإلكتروني المتخصص بالمنتجات والخدمات الزراعية في سلطنة عُمان — بذور وشتلات، محاصيل طازجة، أسمدة وتربة، أنظمة ري، أدوات ومعدات، وخدمات زراعية بقيادة قت عمان. Oman's agri products & services marketplace by Qat Oman.",
-  keywords: ["Xmix", "قت عمان", "منتجات زراعية", "خدمات زراعية", "زراعة عمان", "agriculture", "Oman", "marketplace", "farming"],
+    "Xmix السوق الإلكتروني العام في سلطنة عُمان — محلات متنوعة تبيع المنتجات، خدمات احترافية تطلبها بضغطة، وتوصيل سريع يغطي المحافظات كلها. Oman's general marketplace: shops, products, services and delivery.",
+  keywords: ["Xmix", "متجر إلكتروني", "سوق عمان", "منتجات", "خدمات", "توصيل", "محلات", "Oman", "marketplace", "shopping", "delivery"],
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "48x48" },
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Xmix — سوق المنتجات والخدمات الزراعية",
-    description: "كل ما تحتاجه أرضك في رفّ واحد — بذور ومحاصيل وري ومعدات وخدمات زراعية من قت عمان",
+    title: "Xmix — محلات ومنتجات وخدمات وتوصيل",
+    description: "كل ما تحتاجه في سوق واحد — منتجات من محلات موثوقة، خدمات احترافية، وتوصيل سريع يغطي عُمان",
     type: "website",
     images: [{ url: "/logo-card.png", width: 512, height: 512, alt: "Xmix" }],
   },
