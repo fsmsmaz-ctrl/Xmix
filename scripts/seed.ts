@@ -1,8 +1,8 @@
 /**
  * seed.ts — clean-start seed (matches database/setup-database.sql):
- *   • flagship "Qat Oman" shelf (no demo products)
+ *   • flagship "Xmix Main Store" shelf (no demo products)
  *   • system admin account
- *   • Qat Oman merchant (owner) account
+ *   • flagship store merchant (owner) account
  *
  * Wipes other data first (safe to re-run). Run with: npm run db:seed
  *
@@ -35,15 +35,15 @@ async function main() {
 
   const company = await db.company.create({
     data: {
-      slug: 'qat-oman',
-      nameAr: 'قت عمان',
-      nameEn: 'Qat Oman',
-      taglineAr: 'رفّك الزراعي الأول — من البذرة إلى الحصاد',
-      taglineEn: 'Your First Agri Shelf — From Seed to Harvest',
-      descAr: 'قت عمان هي الرف الرئيسي والشركة الرائدة في سوق Xmix المتخصص بالمنتجات والخدمات الزراعية في سلطنة عُمان.',
-      descEn: 'Qat Oman is the flagship shelf of Xmix — Oman’s specialised marketplace for agricultural products and services.',
-      category: 'agri',
-      emoji: '🌾',
+      slug: 'xmix-main',
+      nameAr: 'محل Xmix الرئيسي',
+      nameEn: 'Xmix Main Store',
+      taglineAr: 'كل ما تحتاجه — منتجات وخدمات وتوصيل سريع',
+      taglineEn: 'Everything you need — products, services and fast delivery',
+      descAr: 'محل Xmix الرئيسي هو الرفّ الرئيسي والشركة الرائدة في سوق Xmix التجاري العام — منتجات وخدمات متنوعة مع خدمة توصيل تغطي سلطنة عُمان.',
+      descEn: 'Xmix Main Store is the flagship shelf of Xmix — Oman’s general marketplace for diverse products and services with delivery across the Sultanate.',
+      category: 'general',
+      emoji: '🏬',
       color: '#8B5CF6',
       gradient: 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
       locationAr: 'مسقط، سلطنة عُمان',
@@ -65,8 +65,8 @@ async function main() {
 
   await db.user.create({
     data: {
-      email: 'owner@qatoman.om',
-      name: 'إدارة قت عمان',
+      email: 'owner@xmix.om',
+      name: 'إدارة Xmix',
       role: 'owner',
       companyId: company.id,
       passwordHash: hashPassword('Xmix@2026'),
@@ -74,9 +74,9 @@ async function main() {
   })
 
   console.log('✔ Clean start ready:')
-  console.log('  • Company: قت عمان (qat-oman) — no products')
+  console.log('  • Company: محل Xmix الرئيسي (xmix-main) — no products')
   console.log('  • Admin : admin@xmix.om / Xmix@Admin2026  (change after first login!)')
-  console.log('  • Owner : owner@qatoman.om / Xmix@2026    (change after first login!)')
+  console.log('  • Owner : owner@xmix.om / Xmix@2026       (change after first login!)')
 }
 
 main()
