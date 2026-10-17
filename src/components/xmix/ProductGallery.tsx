@@ -27,8 +27,13 @@ export function ProductGallery({ product, badge, discountPct }: {
   const [active, setActive] = useState(0)
   const [zoomOpen, setZoomOpen] = useState(false)
 
-  // reset when switching between products
-  useEffect(() => { setActive(0) }, [product.id])
+  // reset when switching between products — adjust state during render
+  // (React-recommended pattern; avoids setState inside an effect)
+  const [prevProductId, setPrevProductId] = useState(product.id)
+  if (prevProductId !== product.id) {
+    setPrevProductId(product.id)
+    setActive(0)
+  }
 
   const step = useCallback(
     (dir: 1 | -1) => {
@@ -71,7 +76,7 @@ export function ProductGallery({ product, badge, discountPct }: {
           tabIndex={hasPhotos ? 0 : undefined}
         >
           {hasPhotos ? (
-            // eslint-disable-next-line @next/next/no-img-element
+             
             <img
               key={current}
               src={current}
@@ -138,7 +143,7 @@ export function ProductGallery({ product, badge, discountPct }: {
                     : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                { }
                 <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
               </button>
             ))}
@@ -156,7 +161,7 @@ export function ProductGallery({ product, badge, discountPct }: {
             {lang === 'ar' ? product.nameAr : product.nameEn}
           </DialogTitle>
           <div className="relative flex items-center justify-center overflow-hidden rounded-2xl select-none">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src={current}
               alt={lang === 'ar' ? product.nameAr : product.nameEn}
