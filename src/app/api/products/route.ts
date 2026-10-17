@@ -6,9 +6,11 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams
     const companyId = sp.get('companyId') || undefined
     const category = sp.get('category') || undefined
-    const search = sp.get('q')?.trim() || undefined
+    const search = sp.get('q')?.trim().slice(0, 100) || undefined
     const bestSeller = sp.get('bestSeller')
-    const take = Number(sp.get('take')) || undefined
+    // Cap `take` so a caller can't request the entire table in one query
+    const takeRaw = Number(sp.get('take'))
+    const take = Number.isFinite(takeRaw) && takeRaw > 0 ? Math.min(200, Math.floor(takeRaw)) : undefined
 
     const searchCondition = search
       ? {
@@ -26,6 +28,9 @@ export async function GET(req: NextRequest) {
         companyId,
         category,
         isBestSeller: bestSeller === '1' ? true : undefined,
+        // Only expose products from shelves visible on the storefront
+        // (pending / suspended companies must not leak via the API)
+        company: { status: 'active' },
         ...searchCondition,
       },
       orderBy: [{ createdAt: 'asc' }],
