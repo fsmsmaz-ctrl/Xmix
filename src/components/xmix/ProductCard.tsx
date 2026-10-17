@@ -24,6 +24,7 @@ export function ProductCard({
   const name = lang === 'ar' ? product.nameAr : product.nameEn
   const companyName = company ? (lang === 'ar' ? company.nameAr : company.nameEn) : undefined
   const badge = lang === 'ar' ? product.badgeAr : product.badgeEn
+  const isService = (product.kind ?? 'product') === 'service'
   const gallery = productGallery(product)
   const photoCount = gallery.length
 
@@ -61,7 +62,7 @@ export function ProductCard({
         style={{ background: product.gradient }}
       >
         {product.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
+           
           <img
             src={product.image}
             alt={name}
@@ -81,6 +82,13 @@ export function ProductCard({
         {badge && (
           <span className="absolute top-2 start-2 text-[10px] font-extrabold bg-black/45 backdrop-blur text-white rounded-full px-2.5 py-1 border border-white/15">
             {badge}
+          </span>
+        )}
+        {isService && (
+          <span
+            className={`absolute start-2 ${badge ? 'top-9' : 'top-2'} text-[10px] font-extrabold bg-fuchsia-600/85 backdrop-blur text-white rounded-full px-2.5 py-1 border border-white/15`}
+          >
+            🛠️ {lang === 'ar' ? 'خدمة' : 'Service'}
           </span>
         )}
         {product.oldPrice && product.oldPrice > product.price && (
