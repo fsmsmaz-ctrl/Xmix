@@ -44,6 +44,11 @@ export async function PATCH(
     if (body.emoji !== undefined) data.emoji = cleanStr(body.emoji, 8) || product.emoji
     if (body.gradient !== undefined) data.gradient = cleanStr(body.gradient, 160) || product.gradient
     if (body.category !== undefined) data.category = cleanStr(body.category, 40) || product.category
+    if (body.kind !== undefined) {
+      // only two kinds exist — service ignores physical stock and gets capacity
+      data.kind = body.kind === 'service' ? 'service' : 'product'
+      if (data.kind === 'service') data.stock = 999
+    }
     if (body.badgeAr !== undefined) data.badgeAr = cleanStr(body.badgeAr, 40) || null
     if (body.badgeEn !== undefined) data.badgeEn = cleanStr(body.badgeEn, 40) || null
     if (body.isBestSeller !== undefined) data.isBestSeller = Boolean(body.isBestSeller)
