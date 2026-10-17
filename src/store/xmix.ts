@@ -24,6 +24,7 @@ export interface ShopFilters {
   q: string
   company: string
   category: string
+  kind: '' | 'product' | 'service'
   minPrice: string
   maxPrice: string
   sort: 'featured' | 'priceAsc' | 'priceDesc' | 'rating'
@@ -56,7 +57,7 @@ interface XmixState {
 }
 
 export const DEFAULT_FILTERS: ShopFilters = {
-  q: '', company: '', category: '', minPrice: '', maxPrice: '', sort: 'featured',
+  q: '', company: '', category: '', kind: '', minPrice: '', maxPrice: '', sort: 'featured',
 }
 
 export const useXmix = create<XmixState>()(
