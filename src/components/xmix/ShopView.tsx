@@ -33,6 +33,7 @@ export function ShopView({
       const company = companies.find((c) => c.id === p.companyId)
       if (filters.company && p.companyId !== filters.company) return false
       if (filters.category && p.category !== filters.category) return false
+      if (filters.kind && (p.kind ?? 'product') !== filters.kind) return false
       if (filters.minPrice && p.price < Number(filters.minPrice)) return false
       if (filters.maxPrice && p.price > Number(filters.maxPrice)) return false
       if (q) {
@@ -89,6 +90,24 @@ export function ShopView({
                 {c.emoji} {lang === 'ar' ? c.nameAr : c.nameEn}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* kind: product vs service — the two core listing types */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-muted-foreground">{t.filters.kind[lang]}</label>
+        <Select
+          value={filters.kind || 'ALL'}
+          onValueChange={(v) => setShopFilters({ kind: v === 'ALL' ? '' : (v as 'product' | 'service') })}
+        >
+          <SelectTrigger className="w-full rounded-xl bg-secondary/60">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">{t.filters.kindAll[lang]}</SelectItem>
+            <SelectItem value="product">📦 {t.filters.kindProducts[lang]}</SelectItem>
+            <SelectItem value="service">🛠️ {t.filters.kindServices[lang]}</SelectItem>
           </SelectContent>
         </Select>
       </div>
