@@ -44,6 +44,7 @@ export function ProductView({
   const name = lang === 'ar' ? product.nameAr : product.nameEn
   const desc = lang === 'ar' ? product.descAr : product.descEn
   const badge = lang === 'ar' ? product.badgeAr : product.badgeEn
+  const isService = (product.kind ?? 'product') === 'service'
 
   const related = products
     .filter((p) => p.id !== product.id && (p.category === product.category || p.companyId === product.companyId))
@@ -109,19 +110,30 @@ export function ProductView({
               </button>
             )}
             <h1 className="text-xl sm:text-3xl font-black mt-3 leading-snug">{name}</h1>
-            <div className="flex items-center gap-2 mt-2.5">
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
               <StarRating rating={product.rating} size={16} />
               <span className="text-sm font-bold">{product.rating.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">({product.reviews} {t.product.reviews[lang]})</span>
+              <span
+                className={`text-[11px] font-extrabold rounded-full px-2.5 py-1 border ${
+                  isService
+                    ? 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30'
+                    : 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                }`}
+              >
+                {isService ? `🛠️ ${t.product.kindService[lang]}` : `📦 ${t.product.kindProduct[lang]}`}
+              </span>
             </div>
           </div>
 
           <PriceTag price={product.price} oldPrice={product.oldPrice} lang={lang} size="lg" />
 
-          {/* stock */}
+          {/* stock / availability */}
           <div>
             {product.stock <= 0 ? (
-              <span className="text-sm font-bold text-rose-400">✕ {t.product.outOfStock[lang]}</span>
+              <span className="text-sm font-bold text-rose-400">✕ {isService ? t.product.outOfCapacity[lang] : t.product.outOfStock[lang]}</span>
+            ) : isService ? (
+              <span className="text-sm font-bold text-emerald-400">✓ {t.product.available[lang]}</span>
             ) : product.stock <= 10 ? (
               <span className="text-sm font-bold text-amber-400">⚡ {t.product.lowStock[lang]} — {product.stock}</span>
             ) : (
@@ -142,7 +154,7 @@ export function ProductView({
                 </Button>
               </div>
               <Button onClick={() => handleAdd(false)} className="rounded-xl font-bold gap-2 h-11 flex-1 sm:flex-none sm:px-6 shadow-lg shadow-violet-900/30">
-                <ShoppingCart size={17} /> {t.product.addToCart[lang]}
+                <ShoppingCart size={17} /> {isService ? t.product.orderService[lang] : t.product.addToCart[lang]}
               </Button>
               <Button onClick={() => handleAdd(true)} variant="secondary" className="rounded-xl font-bold gap-2 h-11 flex-1 sm:flex-none sm:px-6">
                 <Zap size={17} /> {t.product.buyNow[lang]}
