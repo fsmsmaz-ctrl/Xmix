@@ -181,7 +181,7 @@ export function ProductImagesField({
               className="group relative h-40 w-40 overflow-hidden rounded-2xl border-2 border-primary/60 shadow-md"
               {...dropHandlers}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img src={main.preview} alt={d.mainImageSet[lang]} className="h-full w-full object-cover" />
               <button
                 type="button"
@@ -242,7 +242,7 @@ export function ProductImagesField({
                 key={s.key}
                 className="group relative h-20 w-20 overflow-hidden rounded-xl border border-border shadow-sm"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                { }
                 <img src={s.preview} alt="" className="h-full w-full cursor-pointer object-cover" onClick={() => makeMain(i + 1)} title={d.makeMain[lang]} />
                 <button
                   type="button"
