@@ -35,6 +35,8 @@ export interface Product {
   emoji: string
   gradient: string
   category: string
+  /** 'product' = منتج مادي (مخزون) | 'service' = خدمة (حجز/طلب، مخزون = طاقة استيعابية) */
+  kind: 'product' | 'service'
   stock: number
   rating: number
   reviews: number
@@ -185,11 +187,20 @@ export interface AdminOrder {
   myTotal: number
 }
 
+/* أقسام السوق التجاري العام */
 export const CATEGORIES = [
-  { key: 'crops', ar: 'محاصيل طازجة', en: 'Fresh Crops', emoji: '🌾' },
-  { key: 'seeds', ar: 'بذور وشتلات', en: 'Seeds & Seedlings', emoji: '🌱' },
-  { key: 'soil', ar: 'أسمدة وتربة', en: 'Fertilizers & Soil', emoji: '🪴' },
-  { key: 'irrigation', ar: 'ري ومياه', en: 'Irrigation & Water', emoji: '💧' },
-  { key: 'tools', ar: 'أدوات ومعدات', en: 'Tools & Equipment', emoji: '🛠️' },
-  { key: 'services', ar: 'خدمات زراعية', en: 'Agri Services', emoji: '🧑‍🌾' },
+  { key: 'electronics', ar: 'إلكترونيات', en: 'Electronics', emoji: '📱' },
+  { key: 'fashion', ar: 'أزياء وملابس', en: 'Fashion', emoji: '👗' },
+  { key: 'home', ar: 'منزل ومعيشة', en: 'Home & Living', emoji: '🏠' },
+  { key: 'grocery', ar: 'بقالة وطعام', en: 'Grocery & Food', emoji: '🛒' },
+  { key: 'beauty', ar: 'جمال وعناية', en: 'Beauty & Care', emoji: '💄' },
+  { key: 'services', ar: 'خدمات', en: 'Services', emoji: '🛠️' },
 ] as const
+
+/* نوع العرض — الركيزتان الأساسيتان للمتجر (التوصيل ركيزة ثالثة مدمجة في الطلب) */
+export const PRODUCT_KINDS = [
+  { key: 'product', ar: 'منتج', en: 'Product', emoji: '📦' },
+  { key: 'service', ar: 'خدمة', en: 'Service', emoji: '🛠️' },
+] as const
+
+export type ProductKind = (typeof PRODUCT_KINDS)[number]['key']
