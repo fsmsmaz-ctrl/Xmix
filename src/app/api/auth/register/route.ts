@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword, setSessionCookie, getSessionUser } from '@/lib/auth'
+import { rateLimit, clientIp } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    // Anti-spam: 10 registrations / hour per IP
+    const ip = clientIp(req)
+    const limited = rateLimit(`register:${ip}`, 10, 60 * 60 * 1000)
+    if (limited)
+      return NextResponse.json(
+        { error: `طلبات كثيرة، أعد المحاولة بعد ${limited.retryAfter} ثانية | Too many requests, retry in ${limited.retryAfter}s` },
+        { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } }
+      )
+
     const body = await req.json()
-    const name = String(body.name || '').trim()
-    const email = String(body.email || '').trim().toLowerCase()
-    const password = String(body.password || '')
+    const name = String(body.name || '').trim().slice(0, 80)
+    const email = String(body.email || '').trim().toLowerCase().slice(0, 200)
+    const password = String(body.password || '').slice(0, 200)
 
     if (!name || name.length < 2)
       return NextResponse.json({ error: 'الاسم قصير جداً | Name too short' }, { status: 400 })
