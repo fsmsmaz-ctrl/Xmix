@@ -194,7 +194,7 @@ export function DashboardView() {
                   className="flex flex-wrap sm:flex-nowrap items-center gap-3 rounded-2xl border border-border bg-card p-3 sm:p-4"
                 >
                   {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img
                       src={p.image}
                       alt={lang === 'ar' ? p.nameAr : p.nameEn}
@@ -213,6 +213,11 @@ export function DashboardView() {
                   <div className="flex-1 min-w-40">
                     <p className="font-bold text-sm truncate flex items-center gap-1.5">
                       {lang === 'ar' ? p.nameAr : p.nameEn}
+                      {p.kind === 'service' && (
+                        <span className="inline-flex items-center rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-300">
+                          🛠️ {t.product.kindService[lang]}
+                        </span>
+                      )}
                       {!p.image && (
                         <span
                           title={t.dash.noImageYet[lang]}
@@ -223,13 +228,19 @@ export function DashboardView() {
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {fmtPrice(p.price, lang)} · {d.stock[lang]}: {p.stock}
+                      {fmtPrice(p.price, lang)} · {p.kind === 'service' ? d.stockService[lang] : `${d.stock[lang]}: ${p.stock}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-lg px-2 py-1 text-[11px] font-bold ${p.stock <= 5 ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
-                      {p.stock <= 5 ? '⚠' : '✓'} {p.stock}
-                    </span>
+                    {p.kind === 'service' ? (
+                      <span className="rounded-lg px-2 py-1 text-[11px] font-bold bg-sky-500/15 text-sky-400">
+                        ✓ {lang === 'ar' ? 'حجز' : 'Book'}
+                      </span>
+                    ) : (
+                      <span className={`rounded-lg px-2 py-1 text-[11px] font-bold ${p.stock <= 5 ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                        {p.stock <= 5 ? '⚠' : '✓'} {p.stock}
+                      </span>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
