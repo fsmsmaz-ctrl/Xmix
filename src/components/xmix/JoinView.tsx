@@ -95,8 +95,8 @@ export function JoinView() {
           <div className="rounded-xl bg-black/25 p-4 text-center">
             <p className="text-xs text-violet-200/90 leading-relaxed">
               {lang === 'ar'
-                ? 'انضم اليوم إلى قت عمان ورفوف الشركات الأخرى داخل Xmix'
-                : 'Join Qat Oman and other company shelves inside Xmix today'}
+                ? 'انضم اليوم إلى محل Xmix الرئيسي والمحلات الأخرى داخل السوق'
+                : 'Join the Xmix Main Store and other shops inside the marketplace today'}
             </p>
           </div>
         </div>
