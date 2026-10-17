@@ -36,6 +36,20 @@ export function AdminView() {
 
   const isAdmin = user?.role === 'admin'
 
+  // NOTE: hooks must run unconditionally — this useMemo lives above the
+  // !isAdmin early-return guard (fixes react-hooks/rules-of-hooks).
+  const filteredUsers = useMemo(() => {
+    const needle = q.trim().toLowerCase()
+    if (!needle) return users
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(needle) ||
+        u.email.toLowerCase().includes(needle) ||
+        u.company?.nameAr.includes(needle) ||
+        u.company?.nameEn.toLowerCase().includes(needle)
+    )
+  }, [users, q])
+
   const reload = useCallback(async () => {
     if (!isAdmin) return
     setLoading(true)
@@ -77,18 +91,6 @@ export function AdminView() {
       </div>
     )
   }
-
-  const filteredUsers = useMemo(() => {
-    const needle = q.trim().toLowerCase()
-    if (!needle) return users
-    return users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(needle) ||
-        u.email.toLowerCase().includes(needle) ||
-        u.company?.nameAr.includes(needle) ||
-        u.company?.nameEn.toLowerCase().includes(needle)
-    )
-  }, [users, q])
 
   const demote = async (u: SystemUser) => {
     if (!window.confirm(s.confirmRevoke[lang])) return
