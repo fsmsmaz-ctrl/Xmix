@@ -44,9 +44,11 @@ model Product {
   emoji       String
   gradient    String
   category    String
+  /// product = منتج مادي | service = خدمة (المخزون = طاقة استيعابية للطلبات)
+  kind        String      @default("product") // product | service
   stock       Int         @default(20)
   rating      Float       @default(4.5)
-  reviews     Int         @default(12)
+  reviews     Int         @default(0)
   badgeAr     String?
   badgeEn     String?
   isBestSeller Boolean    @default(false)
