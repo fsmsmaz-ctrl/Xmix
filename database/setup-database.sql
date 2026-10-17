@@ -3,9 +3,9 @@
 --  الصق هذا الملف كاملاً في Supabase SQL Editor ثم اضغط Run مرة واحدة.
 --
 --  ينشئ الجداول + يزرع بداية نظيفة فقط:
---    • رف قت عمان الرئيسي (بدون منتجات — تُضاف من لوحة التاجر)
+--    • محل Xmix الرئيسي (بدون منتجات — تُضاف من لوحة التاجر)
 --    • حساب مسؤول النظام:   admin@xmix.om
---    • حساب تاجر قت عمان:   owner@qatoman.om
+--    • حساب تاجر المحل الرئيسي: owner@xmix.om
 --  لا يحتوي أي حسابات أو منتجات تجريبية.
 --  آمن لإعادة التشغيل (يحذف القديم أولاً).
 -- ══════════════════════════════════════════════════════════════════
@@ -56,9 +56,10 @@ CREATE TABLE "Product" (
     "emoji" TEXT NOT NULL,
     "gradient" TEXT NOT NULL,
     "category" TEXT NOT NULL,
+    "kind" TEXT NOT NULL DEFAULT 'product',
     "stock" INTEGER NOT NULL DEFAULT 20,
     "rating" DOUBLE PRECISION NOT NULL DEFAULT 4.5,
-    "reviews" INTEGER NOT NULL DEFAULT 12,
+    "reviews" INTEGER NOT NULL DEFAULT 0,
     "badgeAr" TEXT,
     "badgeEn" TEXT,
     "isBestSeller" BOOLEAN NOT NULL DEFAULT false,
@@ -182,18 +183,18 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") RE
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- 3) رف قت عمان الرئيسي (شركة معتمدة — بدون منتجات تجريبية)
+-- 3) محل Xmix الرئيسي (شركة معتمدة — بدون منتجات تجريبية)
 INSERT INTO "Company" ("id","slug","nameAr","nameEn","taglineAr","taglineEn","descAr","descEn","category","emoji","color","gradient","locationAr","locationEn","rating","isFeatured","status","joinedAt") VALUES
-('cmp_qat_oman_flagship', 'qat-oman', 'قت عمان', 'Qat Oman',
- 'رفّك الزراعي الأول — من البذرة إلى الحصاد', 'Your First Agri Shelf — From Seed to Harvest',
- 'قت عمان هي الرف الرئيسي والشركة الرائدة في سوق Xmix المتخصص بالمنتجات والخدمات الزراعية في سلطنة عُمان.',
- 'Qat Oman is the flagship shelf of Xmix — Oman’s specialised marketplace for agricultural products and services.',
- 'agri', '🌾', '#8B5CF6', 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
+('cmp_xmix_flagship', 'xmix-main', 'محل Xmix الرئيسي', 'Xmix Main Store',
+ 'كل ما تحتاجه — منتجات وخدمات وتوصيل سريع', 'Everything you need — products, services and fast delivery',
+ 'محل Xmix الرئيسي هو الرفّ الرئيسي والشركة الرائدة في سوق Xmix التجاري العام — منتجات وخدمات متنوعة مع خدمة توصيل تغطي سلطنة عُمان.',
+ 'Xmix Main Store is the flagship shelf of Xmix — Oman’s general marketplace for diverse products and services with delivery across the Sultanate.',
+ 'general', '🏬', '#8B5CF6', 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
  'مسقط، سلطنة عُمان', 'Muscat, Oman', 4.9, TRUE, 'active', CURRENT_TIMESTAMP);
 
--- 4) حسابات النظام فقط (مسؤول النظام + تاجر قت عمان)
+-- 4) حسابات النظام فقط (مسؤول النظام + تاجر المحل الرئيسي)
 INSERT INTO "User" ("id","email","passwordHash","name","role","companyId","createdAt") VALUES
 ('usr_xmix_system_admin', 'admin@xmix.om', 'f884b81410aa2f6f03f0c8bc559e3aba:7a17d9fba63a6604866e607dc00174c5685d896ad92fac43fc444cb65d76e4c5e0cebfcd995b6aba752a485a3831ad99702d70c6e5378852d3746195c39075d9', 'مسؤول النظام', 'admin', NULL, CURRENT_TIMESTAMP),
-('usr_qat_oman_owner', 'owner@qatoman.om', '20f9b0047f99154a18bd179ce95777bc:b0cf49d95b66dd2cb573c1c9224a3aecaf894e2e568bee5374a966c8104aae3f293dd5423f318e0586e0cd4018081507cd23560cb419c7c256aff57a726c843e', 'إدارة قت عمان', 'owner', 'cmp_qat_oman_flagship', CURRENT_TIMESTAMP);
+('usr_xmix_flagship_owner', 'owner@xmix.om', '20f9b0047f99154a18bd179ce95777bc:b0cf49d95b66dd2cb573c1c9224a3aecaf894e2e568bee5374a966c8104aae3f293dd5423f318e0586e0cd4018081507cd23560cb419c7c256aff57a726c843e', 'إدارة Xmix', 'owner', 'cmp_xmix_flagship', CURRENT_TIMESTAMP);
 
 COMMIT;
