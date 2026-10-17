@@ -7,7 +7,7 @@ import { sanitizeImageList, splitGallery, syncProductImages } from '@/lib/produc
 type ProductInput = {
   nameAr?: unknown; nameEn?: unknown; descAr?: unknown; descEn?: unknown
   price?: unknown; oldPrice?: unknown; emoji?: unknown; gradient?: unknown
-  category?: unknown; stock?: unknown; badgeAr?: unknown; badgeEn?: unknown
+  category?: unknown; kind?: unknown; stock?: unknown; badgeAr?: unknown; badgeEn?: unknown
   isBestSeller?: unknown; image?: unknown; images?: unknown
 }
 
@@ -48,9 +48,14 @@ export async function POST(req: NextRequest) {
     const nameAr = cleanStr(body.nameAr, 120)
     const nameEn = cleanStr(body.nameEn, 120)
     const price = Number(body.price)
-    const stock = Number.isFinite(Number(body.stock)) ? Math.max(0, Math.floor(Number(body.stock))) : 20
     const category = cleanStr(body.category, 40) || 'general'
-    const emoji = cleanStr(body.emoji, 8) || '🛍️'
+    // kind: 'product' (physical) or 'service' — anything else falls back to product
+    const kind = body.kind === 'service' ? 'service' : 'product'
+    // services are bookable — they get ample capacity instead of physical stock
+    const stock = kind === 'service'
+      ? 999
+      : Number.isFinite(Number(body.stock)) ? Math.max(0, Math.floor(Number(body.stock))) : 20
+    const emoji = cleanStr(body.emoji, 8) || (kind === 'service' ? '🛠️' : '🛍️')
     const gradient = cleanStr(body.gradient, 160) || 'linear-gradient(135deg,#8B5CF6,#6D28D9)'
 
     if (nameAr.length < 2 || nameEn.length < 2)
@@ -80,6 +85,7 @@ export async function POST(req: NextRequest) {
         emoji,
         gradient,
         category,
+        kind,
         stock,
         rating: 4.5,
         reviews: 0,
