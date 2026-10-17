@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Phone, Mail, Download } from 'lucide-react'
+import { MapPin, Phone, Mail } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import { Logo } from '@/components/xmix/Logo'
@@ -95,13 +95,6 @@ export function Footer({ companies }: { companies: Company[] }) {
           <p className="text-xs text-muted-foreground">
             © {year} Xmix — {t.footer.rights[lang]}
           </p>
-          <a
-            href="/download"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-bold text-violet-300 transition hover:border-violet-500/60 hover:bg-violet-500/20"
-          >
-            <Download size={13} />
-            {lang === 'ar' ? 'تحميل ملفات الموقع' : 'Download site files'}
-          </a>
           <p className="text-xs text-muted-foreground">
             {lang === 'ar' ? 'شركة أم مسجّلة بسلطنة عُمان' : 'A parent company registered in Oman'}
           </p>
