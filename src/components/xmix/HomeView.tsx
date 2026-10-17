@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   ShieldCheck, Truck, LayoutGrid, Headset, ArrowLeft, ArrowRight, Building2,
+  Package, Wrench, Bike,
 } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
@@ -42,7 +43,12 @@ export function HomeView({
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 5)
 
   const search = (q: string) => {
-    setShopFilters({ q, company: '', category: '' })
+    setShopFilters({ q, company: '', category: '', kind: '' })
+    navigate({ name: 'shop' })
+  }
+
+  const openPillar = (pillar: 'products' | 'services') => {
+    setShopFilters({ q: '', company: '', category: '', kind: pillar === 'products' ? 'product' : 'service' })
     navigate({ name: 'shop' })
   }
 
@@ -139,7 +145,65 @@ export function HomeView({
       </section>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        {/* ============ FEATURED SHELF (Qat Oman) ============ */}
+        {/* ============ THREE PILLARS: PRODUCTS · SERVICES · DELIVERY ============ */}
+        <section className="pt-12">
+          <SectionTitle title={t.pillars.title[lang]} subtitle={t.pillars.subtitle[lang]} />
+          <div className="grid sm:grid-cols-3 gap-4">
+            {/* products pillar */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+              className="xmix-card-hover rounded-3xl border border-violet-500/25 bg-card p-6 flex flex-col"
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-4">
+                <Package size={26} />
+              </span>
+              <h3 className="text-lg font-black">{t.pillars.products[lang]}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2 flex-1">{t.pillars.productsDesc[lang]}</p>
+              <Button variant="secondary" size="sm" onClick={() => openPillar('products')} className="mt-4 w-fit rounded-xl font-bold gap-1.5">
+                {t.pillars.ctaProducts[lang]} <ArrowIcon size={14} />
+              </Button>
+            </motion.div>
+            {/* services pillar */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.08 }}
+              className="xmix-card-hover rounded-3xl border border-fuchsia-500/25 bg-card p-6 flex flex-col"
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-fuchsia-400 mb-4">
+                <Wrench size={26} />
+              </span>
+              <h3 className="text-lg font-black">{t.pillars.services[lang]}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2 flex-1">{t.pillars.servicesDesc[lang]}</p>
+              <Button variant="secondary" size="sm" onClick={() => openPillar('services')} className="mt-4 w-fit rounded-xl font-bold gap-1.5">
+                {t.pillars.ctaServices[lang]} <ArrowIcon size={14} />
+              </Button>
+            </motion.div>
+            {/* delivery pillar */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.16 }}
+              className="xmix-card-hover rounded-3xl border border-emerald-500/25 bg-card p-6 flex flex-col"
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 mb-4">
+                <Bike size={26} />
+              </span>
+              <h3 className="text-lg font-black">{t.pillars.delivery[lang]}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2 flex-1">{t.pillars.deliveryDesc[lang]}</p>
+              <Button variant="secondary" size="sm" onClick={() => navigate({ name: 'about' })} className="mt-4 w-fit rounded-xl font-bold gap-1.5">
+                {t.pillars.ctaDelivery[lang]} <ArrowIcon size={14} />
+              </Button>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ============ FLAGSHIP STORE ============ */}
         {featured && (
           <section className="pt-12">
             <SectionTitle
