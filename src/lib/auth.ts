@@ -2,7 +2,19 @@ import crypto from 'crypto'
 import { cookies, headers } from 'next/headers'
 import { db } from '@/lib/db'
 
-const SECRET = process.env.AUTH_SECRET || 'xmix-local-secret-2026'
+// SECURITY: the fallback secret is for local development only. In production
+// an ephemeral random secret is generated per boot (with a loud warning) so a
+// publicly-known default can never be used to forge session cookies.
+const SECRET = process.env.AUTH_SECRET || (() => {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(
+      '[auth] AUTH_SECRET is not set in production — using an ephemeral random secret. ' +
+      'Sessions will be invalidated on every deploy. Set AUTH_SECRET to a 64-char hex value.'
+    )
+    return crypto.randomBytes(32).toString('hex')
+  }
+  return 'xmix-local-secret-2026'
+})()
 const COOKIE_NAME = 'xmix_session'
 const MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
@@ -38,7 +50,11 @@ export function verifyToken(token: string): string | null {
   try {
     const [payload, sig] = token.split('.')
     if (!payload || !sig) return null
-    if (sign(payload) !== sig) return null
+    // Timing-safe signature comparison (prevents signature oracle attacks)
+    const expected = Buffer.from(sign(payload))
+    const received = Buffer.from(sig)
+    if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received))
+      return null
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
       uid: string; exp: number
     }
