@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 
@@ -34,6 +35,19 @@ export async function POST(req: NextRequest) {
     // SECURITY: prices are ALWAYS recomputed server-side from the DB.
     // Client-supplied prices/names are ignored entirely — every item must
     // reference a real, purchasable product.
+    //
+    // BUG-FIX (money integrity): merge quantities PER PRODUCT FIRST, then
+    // price/stock-check the MERGED quantity. The previous flow priced the
+    // first line and only appended quantities for duplicates, so a caller
+    // sending [{X,2},{X,3}] got 5 units charged as 2.
+    const merged = new Map<string, number>()
+    for (const it of items) {
+      const productId = typeof it.productId === 'string' ? it.productId : ''
+      if (!productId) continue
+      const qty = Math.max(1, Math.min(99, Number(it.qty) || 1))
+      merged.set(productId, Math.min(99, (merged.get(productId) ?? 0) + qty))
+    }
+
     let subtotal = 0
     const rows: {
       productId: string
@@ -47,18 +61,7 @@ export async function POST(req: NextRequest) {
       companyEn: string | null
     }[] = []
 
-    for (const it of items) {
-      const productId = typeof it.productId === 'string' ? it.productId : ''
-      const qty = Math.max(1, Math.min(99, Number(it.qty) || 1))
-      if (!productId) continue
-
-      // Skip duplicate product lines (merge quantities instead of ordering twice)
-      const existing = rows.find((r) => r.productId === productId)
-      if (existing) {
-        existing.qty = Math.min(99, existing.qty + qty)
-        continue
-      }
-
+    for (const [productId, qty] of merged) {
       const p = await db.product.findUnique({
         where: { id: productId },
         include: { company: { select: { nameAr: true, nameEn: true, status: true } } },
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
     const shipping = subtotal >= 50 ? 0 : 2
     const total = subtotal + shipping
     // Random suffix avoids unique-constraint collisions under concurrency
-    const orderNumber = `XM-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`
+    const orderNumber = `XM-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 4).toUpperCase()}`
 
     const user = await getSessionUser()
 
