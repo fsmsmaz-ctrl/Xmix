@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
+import { GENERAL_CATEGORY, isKnownCategory } from '@/lib/types'
 
 /** Transliteration-unfriendly safe slug: keeps latin letters/digits, dashes. */
 export function slugify(text: string): string {
@@ -94,7 +95,9 @@ export async function grantMerchant(
   }
 
   const slug = await uniqueSlug(nameEn)
-  const category = opts.company.category?.trim() || 'general'
+  // Defensive: unknown/legacy category values fall back to the default section
+  const rawCategory = opts.company.category?.trim() || ''
+  const category = isKnownCategory(rawCategory) ? rawCategory : GENERAL_CATEGORY
   const city = opts.company.city?.trim() || 'مسقط، سلطنة عُمان'
   const description = opts.company.description?.trim() || ''
 
