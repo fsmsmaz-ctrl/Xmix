@@ -8,9 +8,10 @@ export async function GET(req: NextRequest) {
     const category = sp.get('category') || undefined
     const search = sp.get('q')?.trim().slice(0, 100) || undefined
     const bestSeller = sp.get('bestSeller')
-    // Cap `take` so a caller can't request the entire table in one query
+    // Cap `take` so a caller can't request the entire table in one query —
+    // also applied as the default when the param is absent (was unbounded before).
     const takeRaw = Number(sp.get('take'))
-    const take = Number.isFinite(takeRaw) && takeRaw > 0 ? Math.min(200, Math.floor(takeRaw)) : undefined
+    const take = Number.isFinite(takeRaw) && takeRaw > 0 ? Math.min(200, Math.floor(takeRaw)) : 200
 
     const searchCondition = search
       ? {
