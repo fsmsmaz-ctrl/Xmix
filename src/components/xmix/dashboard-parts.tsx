@@ -243,6 +243,7 @@ function ProductDialog({
               onChange={(e) => set('category', e.target.value)}
               className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
             >
+              <option value="general">{lang === 'ar' ? '🏬 عام' : '🏬 General'}</option>
               {CATEGORIES.map((c) => (
                 <option key={c.key} value={c.key}>{c.emoji} {lang === 'ar' ? c.ar : c.en}</option>
               ))}
