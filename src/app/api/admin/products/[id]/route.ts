@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { sanitizeImageList, splitGallery, syncProductImages } from '@/lib/product-images'
+import { isKnownCategory } from '@/lib/types'
 
 function cleanStr(v: unknown, max = 400): string {
   return String(v ?? '').trim().slice(0, max)
@@ -43,7 +44,13 @@ export async function PATCH(
     if (body.descEn !== undefined) data.descEn = cleanStr(body.descEn, 900) || product.descEn
     if (body.emoji !== undefined) data.emoji = cleanStr(body.emoji, 8) || product.emoji
     if (body.gradient !== undefined) data.gradient = cleanStr(body.gradient, 160) || product.gradient
-    if (body.category !== undefined) data.category = cleanStr(body.category, 40) || product.category
+    if (body.category !== undefined) {
+      const cat = cleanStr(body.category, 40) || product.category
+      // Category must be a known section (storefront categories or legacy 'general')
+      if (!isKnownCategory(cat))
+        return NextResponse.json({ error: 'قسم غير معروف | Unknown category' }, { status: 400 })
+      data.category = cat
+    }
     if (body.kind !== undefined) {
       // only two kinds exist — service ignores physical stock and gets capacity
       data.kind = body.kind === 'service' ? 'service' : 'product'
