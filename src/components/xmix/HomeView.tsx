@@ -233,7 +233,7 @@ export function HomeView({
         {/* ============ CATEGORIES ============ */}
         <section className="pt-12">
           <SectionTitle title={t.sections.categories[lang]} />
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.key}
