@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n'
 import type {
   Lang, SystemCompany, SystemJoinRequest, SystemOrder, SystemUser,
 } from '@/lib/types'
-import { CATEGORIES } from '@/lib/types'
+import { CATEGORIES, categoryLabel } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -294,11 +294,7 @@ export function RequestsTab({
     return { label: s.statusRejected[lang], cls: 'bg-rose-500/15 text-rose-400' }
   }
 
-  const catLabel = (key: string) => {
-    const c = CATEGORIES.find((x) => x.key === key)
-    if (!c) return key
-    return `${c.emoji} ${lang === 'ar' ? c.ar : c.en}`
-  }
+  const catLabel = (key: string) => categoryLabel(key, lang)
 
   return (
     <div className="space-y-3">
