@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { hashPassword, setSessionCookie, getSessionUser } from '@/lib/auth'
 import { rateLimit, clientIp } from '@/lib/rate-limit'
@@ -30,9 +31,17 @@ export async function POST(req: NextRequest) {
     if (existing)
       return NextResponse.json({ error: 'البريد مسجل مسبقاً | Email already registered' }, { status: 409 })
 
-    const user = await db.user.create({
-      data: { name, email, passwordHash: hashPassword(password) },
-    })
+    let user
+    try {
+      user = await db.user.create({
+        data: { name, email, passwordHash: hashPassword(password) },
+      })
+    } catch (e) {
+      // Concurrent registration on the same email → unique violation, not a 500
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002')
+        return NextResponse.json({ error: 'البريد مسجل مسبقاً | Email already registered' }, { status: 409 })
+      throw e
+    }
     await setSessionCookie(user.id)
     const session = await getSessionUser()
     return NextResponse.json({ user: session })
