@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { sanitizeImageList, splitGallery, syncProductImages } from '@/lib/product-images'
+import { isKnownCategory } from '@/lib/types'
 
 type ProductInput = {
   nameAr?: unknown; nameEn?: unknown; descAr?: unknown; descEn?: unknown
@@ -49,6 +50,9 @@ export async function POST(req: NextRequest) {
     const nameEn = cleanStr(body.nameEn, 120)
     const price = Number(body.price)
     const category = cleanStr(body.category, 40) || 'general'
+    // Category must be a known section (storefront categories or legacy 'general')
+    if (!isKnownCategory(category))
+      return NextResponse.json({ error: 'قسم غير معروف | Unknown category' }, { status: 400 })
     // kind: 'product' (physical) or 'service' — anything else falls back to product
     const kind = body.kind === 'service' ? 'service' : 'product'
     // services are bookable — they get ample capacity instead of physical stock
