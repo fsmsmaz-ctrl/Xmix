@@ -98,30 +98,34 @@ export async function grantMerchant(
   const city = opts.company.city?.trim() || 'مسقط، سلطنة عُمان'
   const description = opts.company.description?.trim() || ''
 
-  const company = await db.company.create({
-    data: {
-      slug,
-      nameAr,
-      nameEn,
-      taglineAr: description ? description.slice(0, 120) : `محل ${nameAr} داخل سوق Xmix`,
-      taglineEn: description ? description.slice(0, 120) : `${nameEn} store on Xmix`,
-      descAr: description || `محل ${nameAr} — منتجات وخدمات داخل سوق Xmix التجاري.`,
-      descEn: description || `${nameEn} — products and services on the Xmix marketplace.`,
-      category,
-      emoji: opts.company.emoji?.trim() || '🏬',
-      color: '#8B5CF6',
-      gradient: 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
-      locationAr: city,
-      locationEn: city,
-      rating: 4.5,
-      isFeatured: false,
-      status: 'active',
-    },
-  })
-
-  await db.user.update({
-    where: { id: user.id },
-    data: { role: 'owner', companyId: company.id },
+  // Atomic: shelf creation + owner promotion succeed or fail together
+  // (prevents an orphaned company with no owner if the second write fails)
+  const company = await db.$transaction(async (tx) => {
+    const created = await tx.company.create({
+      data: {
+        slug,
+        nameAr,
+        nameEn,
+        taglineAr: description ? description.slice(0, 120) : `محل ${nameAr} داخل سوق Xmix`,
+        taglineEn: description ? description.slice(0, 120) : `${nameEn} store on Xmix`,
+        descAr: description || `محل ${nameAr} — منتجات وخدمات داخل سوق Xmix التجاري.`,
+        descEn: description || `${nameEn} — products and services on the Xmix marketplace.`,
+        category,
+        emoji: opts.company.emoji?.trim() || '🏬',
+        color: '#8B5CF6',
+        gradient: 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
+        locationAr: city,
+        locationEn: city,
+        rating: 4.5,
+        isFeatured: false,
+        status: 'active',
+      },
+    })
+    await tx.user.update({
+      where: { id: user.id },
+      data: { role: 'owner', companyId: created.id },
+    })
+    return created
   })
 
   return {
