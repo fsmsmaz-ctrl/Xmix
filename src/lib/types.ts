@@ -193,9 +193,29 @@ export const CATEGORIES = [
   { key: 'fashion', ar: 'أزياء وملابس', en: 'Fashion', emoji: '👗' },
   { key: 'home', ar: 'منزل ومعيشة', en: 'Home & Living', emoji: '🏠' },
   { key: 'grocery', ar: 'بقالة وطعام', en: 'Grocery & Food', emoji: '🛒' },
+  { key: 'agri-products', ar: 'منتجات زراعية', en: 'Agricultural Products', emoji: '🧺' },
+  { key: 'agri-crops', ar: 'محاصيل زراعية', en: 'Agricultural Crops', emoji: '🌾' },
   { key: 'beauty', ar: 'جمال وعناية', en: 'Beauty & Care', emoji: '💄' },
   { key: 'services', ar: 'خدمات', en: 'Services', emoji: '🛠️' },
 ] as const
+
+/** التصنيف الافتراضي القديم — منتجات/محلات أُنشئت دون قسم صريح */
+export const GENERAL_CATEGORY = 'general'
+
+/** كل قيم الأقسام المقبولة في الـ API: أقسام الواجهة + 'general' القديم */
+export const CATEGORY_KEYS: readonly string[] = [GENERAL_CATEGORY, ...CATEGORIES.map((c) => c.key)]
+
+/** هل القيمة قسماً معروفاً؟ تُستخدم للتحقق في مسارات الـ API */
+export function isKnownCategory(v: unknown): boolean {
+  return typeof v === 'string' && CATEGORY_KEYS.includes(v)
+}
+
+/** تسمية ثنائية اللغة لأي مفتاح قسم (يشمل 'general' والقيم المجهولة) */
+export function categoryLabel(key: string, lang: Lang): string {
+  if (key === GENERAL_CATEGORY) return lang === 'ar' ? '🏬 عام' : '🏬 General'
+  const c = CATEGORIES.find((x) => x.key === key)
+  return c ? `${c.emoji} ${lang === 'ar' ? c.ar : c.en}` : key
+}
 
 /* نوع العرض — الركيزتان الأساسيتان للمتجر (التوصيل ركيزة ثالثة مدمجة في الطلب) */
 export const PRODUCT_KINDS = [
