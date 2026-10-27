@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUp } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
@@ -65,6 +65,29 @@ export default function XmixPage() {
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
 
+  // Fetch storefront data. `silent` updates the lists without the loading
+  // skeleton (used when re-validating on navigation).
+  const loadData = useCallback(async (silent: boolean) => {
+    if (!silent) {
+      setLoading(true)
+      setFailed(false)
+    }
+    try {
+      const [cRes, pRes] = await Promise.all([
+        fetch('/api/companies', { cache: 'no-store' }),
+        fetch('/api/products', { cache: 'no-store' }),
+      ])
+      const [cData, pData] = await Promise.all([cRes.json(), pRes.json()])
+      setCompanies(cData.companies ?? [])
+      setProducts(pData.products ?? [])
+    } catch {
+      // Keep the previous (possibly non-empty) lists on a background refresh failure
+      if (!silent) setFailed(true)
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }, [])
+
   // init: language from persisted store + fetch session + data
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
@@ -75,24 +98,24 @@ export default function XmixPage() {
       .then((d) => d.user && setUser(d.user))
       .catch(() => {})
 
-    let cancelled = false
-    Promise.all([
-      fetch('/api/companies').then((r) => r.json()),
-      fetch('/api/products').then((r) => r.json()),
-    ])
-      .then(([cData, pData]) => {
-        if (cancelled) return
-        setCompanies(cData.companies ?? [])
-        setProducts(pData.products ?? [])
-        setLoading(false)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setFailed(true)
-        setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [])
+    void loadData(false)
+  }, [loadData])
+
+  // BUG-FIX (stale storefront): data used to be fetched ONLY once on mount,
+  // so products/companies created later in the dashboard (same SPA session)
+  // never appeared in the shop or the homepage until a full page reload.
+  // Re-validate silently whenever the user lands on a data-driven view.
+  const viewName = view.name
+  const skipInitialRef = useRef(true)
+  useEffect(() => {
+    if (skipInitialRef.current) {
+      skipInitialRef.current = false
+      return
+    }
+    if (viewName === 'home' || viewName === 'shop' || viewName === 'companies' || viewName === 'company' || viewName === 'product') {
+      void loadData(true)
+    }
+  }, [viewName, loadData])
 
   const company = 'slug' in view ? companies.find((c) => c.slug === (view as { slug: string }).slug) : undefined
 
