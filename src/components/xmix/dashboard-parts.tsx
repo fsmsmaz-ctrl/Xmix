@@ -9,7 +9,9 @@ import {
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { AdminOrder, AdminStats, Lang, Product } from '@/lib/types'
-import { CATEGORIES } from '@/lib/types'
+import {
+  CATEGORIES, AGRI_GOODS_KEYS, AGRI_SERVICE_KEYS, kindForCategory,
+} from '@/lib/types'
 import { fmtPrice } from '@/store/xmix'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -206,9 +208,13 @@ function ProductDialog({
             </div>
             {form.kind === 'service' ? (
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground">{d.stockService[lang]}</Label>
+                <Label className="text-muted-foreground">
+                  {form.category === 'agri-labor' ? d.laborCapacity[lang] : d.stockService[lang]}
+                </Label>
                 <div className="h-10 rounded-xl border border-dashed border-border bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground px-2 text-center">
-                  {lang === 'ar' ? 'الحجز مفتوح' : 'Open for booking'}
+                  {form.category === 'agri-labor'
+                    ? d.laborCapacityNote[lang]
+                    : lang === 'ar' ? 'الحجز مفتوح' : 'Open for booking'}
                 </div>
               </div>
             ) : (
@@ -226,7 +232,16 @@ function ProductDialog({
               value={form.kind}
               onChange={(e) => {
                 const kind = e.target.value as 'product' | 'service'
-                setForm((f) => ({ ...f, kind, emoji: kind === 'service' && f.emoji === '🛍️' ? '🛠️' : f.emoji }))
+                setForm((f) => {
+                  // الاتساق مع القسم الزراعي: التحويل للخدمة يغيّر القسم الزراعي المادي إلى «خدمات زراعية» والعكس
+                  let category = f.category
+                  if (kind === 'service' && AGRI_GOODS_KEYS.includes(f.category)) category = 'agri-services'
+                  if (kind === 'product' && AGRI_SERVICE_KEYS.includes(f.category)) category = 'agri-products'
+                  const emoji = kind === 'service' && f.emoji === '🛍️'
+                    ? (category === 'agri-labor' ? '👷' : category === 'agri-services' ? '🚜' : '🛠️')
+                    : f.emoji
+                  return { ...f, kind, category, emoji }
+                })
               }}
               className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
             >
@@ -240,7 +255,20 @@ function ProductDialog({
             <Label>{d.category[lang]}</Label>
             <select
               value={form.category}
-              onChange={(e) => set('category', e.target.value)}
+              onChange={(e) => {
+                const cat = e.target.value
+                setForm((f) => {
+                  // الأقسام الزراعية تفرض نوع العرض المناسب: محصول/منتج/بذور = مادي، خدمات/عمالة = خدمة
+                  const forced = kindForCategory(cat)
+                  if (forced && forced !== f.kind) {
+                    const emoji = f.emoji === '🛍️'
+                      ? (cat === 'agri-labor' ? '👷' : cat === 'agri-services' ? '🚜' : forced === 'service' ? '🛠️' : f.emoji)
+                      : f.emoji
+                    return { ...f, category: cat, kind: forced, emoji }
+                  }
+                  return { ...f, category: cat }
+                })
+              }}
               className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
             >
               <option value="general">{lang === 'ar' ? '🏬 عام' : '🏬 General'}</option>
@@ -248,6 +276,13 @@ function ProductDialog({
                 <option key={c.key} value={c.key}>{c.emoji} {lang === 'ar' ? c.ar : c.en}</option>
               ))}
             </select>
+            {form.category === 'agri-labor' ? (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{d.agriLaborHint[lang]}</p>
+            ) : form.category === 'agri-services' ? (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{d.agriServiceHint[lang]}</p>
+            ) : AGRI_GOODS_KEYS.includes(form.category) ? (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{d.agriGoodsHint[lang]}</p>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <Label>{d.emojiField[lang]}</Label>
