@@ -2,7 +2,7 @@ import type { Lang } from './types'
 
 export const t = {
   brand: { ar: 'إكس ميكس', en: 'Xmix' },
-  tagline: { ar: 'سوق التجارة العام — محلات ومنتجات وخدمات وتوصيل', en: 'The General Marketplace — Shops, Products, Services & Delivery' },
+  tagline: { ar: 'سوق التجارة العُماني — منتجات زراعية ومحاصيل وبذور ومنتجات محلية وخدمات', en: 'The Omani marketplace — agri products, crops, seeds, local goods & services' },
   nav: {
     home: { ar: 'الرئيسية', en: 'Home' },
     shop: { ar: 'المتجر', en: 'Shop' },
@@ -15,10 +15,10 @@ export const t = {
   hero: {
     badge: { ar: 'منتجات · خدمات · توصيل', en: 'Products · Services · Delivery' },
     title1: { ar: 'كل ما تحتاجه،', en: 'Everything you need,' },
-    title2: { ar: 'من محلات موثوقة.', en: 'From trusted shops.' },
+    title2: { ar: 'من سوق Xmix الموثوق.', en: 'From Xmix, your trusted market.' },
     subtitle: {
-      ar: 'Xmix هو السوق الإلكتروني العام في سلطنة عُمان — محلات متنوعة تبيع منتجاتك المفضلة، خدمات احترافية تطلبها بضغطة، وتوصيل سريع يغطي المحافظات كلها. كل ذلك في سلة واحدة وتجربة موحّدة.',
-      en: 'Xmix is Oman’s general online marketplace — diverse shops selling your favourite products, professional services one click away, and fast delivery across all governorates. All in one cart and one unified experience.',
+      ar: 'Xmix هو السوق الإلكتروني العُماني الشامل — قلبه منتجات زراعية ومحاصيل طازجة وبذور ومنتجات محلية أصيلة من مزارع المنطقة ومنتجيها، إلى جانب محلات متنوعة وخدمات احترافية وتوصيل يغطي المحافظات كلها.',
+      en: 'Xmix is Oman’s all-in-one online marketplace — at its heart: farm products, fresh crops, seeds and authentic local goods from the region’s growers and producers, alongside diverse shops, professional services and delivery across all governorates.',
     },
     searchPlaceholder: { ar: 'ابحث عن منتجات، خدمات، محلات…', en: 'Search products, services, shops…' },
     ctaShop: { ar: 'تسوّق الآن', en: 'Shop Now' },
@@ -36,8 +36,8 @@ export const t = {
     },
     products: { ar: 'منتجات', en: 'Products' },
     productsDesc: {
-      ar: 'تشكيلة واسعة من المنتجات في محلات موثوقة — إلكترونيات وأزياء ومستلزمات منزل وبقالة وأكثر، بأسعار واضحة وضمان.',
-      en: 'A wide range of products from trusted shops — electronics, fashion, home essentials, groceries and more, with clear prices and guarantees.',
+      ar: 'تشكيلة واسعة تتصدرها المنتجات الزراعية والمحاصيل والبذور والمنتجات المحلية، إلى جانب إلكترونيات وأزياء ومستلزمات منزل وبقالة — بأسعار واضحة وضمان.',
+      en: 'A wide range led by agricultural products, crops, seeds and local goods, alongside electronics, fashion, home essentials and groceries — clear prices and guarantees.',
     },
     services: { ar: 'خدمات', en: 'Services' },
     servicesDesc: {
@@ -54,6 +54,11 @@ export const t = {
     ctaDelivery: { ar: 'تفاصيل التوصيل', en: 'Delivery details' },
   },
   sections: {
+    agriMarket: { ar: 'سوق المنتجات الزراعية والمحلية', en: 'Agri & Local Products Market' },
+    agriMarketDesc: {
+      ar: 'قلب Xmix النابض — محاصيل طازجة ومنتجات مزارع وبذور ومنتجات محلية عمانية، إضافة إلى خدمات زراعية وعمالة باليومية، مباشرة من المزارعين والمنتجين ومقدمي الخدمة.',
+      en: 'The beating heart of Xmix — fresh crops, farm produce, seeds and Omani local goods, plus agri services and daily farm labor, straight from growers, producers and service providers.',
+    },
     featuredShelf: { ar: 'المحل الرئيسي', en: 'Flagship Store' },
     shelves: { ar: 'محلات المتجر', en: 'Marketplace Shops' },
     bestSellers: { ar: 'الأكثر مبيعاً في Xmix', en: 'Xmix Best Sellers' },
@@ -177,6 +182,7 @@ export const t = {
     kindProducts: { ar: 'منتجات', en: 'Products' },
     kindServices: { ar: 'خدمات', en: 'Services' },
     category: { ar: 'القسم', en: 'Category' },
+    agriAll: { ar: 'السوق الزراعي والمحلي', en: 'Agri & local market' },
     priceRange: { ar: 'نطاق السعر', en: 'Price range' },
     min: { ar: 'من', en: 'Min' },
     max: { ar: 'إلى', en: 'Max' },
@@ -302,6 +308,11 @@ export const t = {
     kindProduct: { ar: '📦 منتج مادي', en: '📦 Physical product' },
     kindService: { ar: '🛠️ خدمة', en: '🛠️ Service' },
     kindHint: { ar: 'الخدمات تُطلب بالحجز ولا تُخصم منها أكمية — اختر هذا النوع للصيانة والتصميم وأي عمل تحتاج منفّذاً.', en: 'Services are booked rather than stocked — choose this for maintenance, design or any task that needs an expert.' },
+    agriGoodsHint: { ar: 'غرض زراعي مادي (محصول أو منتج أو بذور أو منتج محلي) — يُباع بالمخزون، والنوع ضُبط تلقائياً على «منتج مادي».', en: 'A physical agri item (crop, product, seeds or local goods) — sold from stock; type auto-set to product.' },
+    agriServiceHint: { ar: 'خدمة زراعية تُطلب بالحجز (حرث، ري، حصاد، نقل…) — النوع ضُبط تلقائياً على «خدمة»، والطاقة الاستيعابية = عدد الطلبات المتاحة.', en: 'A bookable agri service (plowing, irrigation, harvest, transport…) — type auto-set to service; capacity = available bookings.' },
+    agriLaborHint: { ar: 'توفير عمال زراعية باليومية — السعر = أجر العامل الواحد لليوم، وعدد العمال يُحدده الزبون عند الطلب. النوع ضُبط تلقائياً على «خدمة».', en: 'Daily farm labor supply — price = wage per worker per day; customers choose how many workers. Type auto-set to service.' },
+    laborCapacity: { ar: 'عدد العمال المتاحين', en: 'Workers available' },
+    laborCapacityNote: { ar: 'يُطلب باليوم — العمالة ليست مخزوناً', en: 'Requested by the day — labor is not stock' },
     status: { ar: 'الحالة', en: 'Status' },
     actions: { ar: 'إجراءات', en: 'Actions' },
     edit: { ar: 'تعديل', en: 'Edit' },
