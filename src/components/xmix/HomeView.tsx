@@ -9,7 +9,7 @@ import {
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
-import { CATEGORIES } from '@/lib/types'
+import { CATEGORIES, AGRI_CATEGORY_KEYS, AGRI_FILTER_PRESET, isAgriCategory } from '@/lib/types'
 import { ProductCard } from './ProductCard'
 import { SectionTitle, StarRating } from './shared'
 import { Logo } from './Logo'
@@ -51,6 +51,20 @@ export function HomeView({
     setShopFilters({ q: '', company: '', category: '', kind: pillar === 'products' ? 'product' : 'service' })
     navigate({ name: 'shop' })
   }
+
+  const openCategory = (category: string) => {
+    setShopFilters({ q: '', company: '', category, kind: '' })
+    navigate({ name: 'shop' })
+  }
+  const openAgriMarket = () => openCategory(AGRI_FILTER_PRESET)
+
+  // قلب السوق: عروض العائلة الزراعية والمحلية (منتجات زراعية + محاصيل + بذور + منتجات محلية)
+  const agriProducts = useMemo(
+    () => products
+      .filter((p) => isAgriCategory(p.category))
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    [products],
+  )
 
   return (
     <div className="pb-16">
@@ -203,6 +217,74 @@ export function HomeView({
           </div>
         </section>
 
+        {/* ============ AGRI & LOCAL MARKET — قلب السوق ============ */}
+        {agriProducts.length > 0 && (
+          <section className="pt-12">
+            <SectionTitle
+              title={`🧺 ${t.sections.agriMarket[lang]}`}
+              subtitle={t.sections.agriMarketDesc[lang]}
+              action={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={openAgriMarket}
+                  className="gap-1.5 rounded-xl font-bold"
+                >
+                  {t.sections.viewAll[lang]} <ArrowIcon size={15} />
+                </Button>
+              }
+            />
+            {/* اختصارات العائلة الزراعية والمحلية */}
+            <div className="flex flex-wrap gap-2 mt-4 mb-5">
+              {AGRI_CATEGORY_KEYS.map((key) => {
+                const cat = CATEGORIES.find((c) => c.key === key)
+                if (!cat) return null
+                return (
+                  <button
+                    key={key}
+                    onClick={() => openCategory(key)}
+                    className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold hover:bg-emerald-500/20 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {cat.emoji} {lang === 'ar' ? cat.ar : cat.en}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {agriProducts.slice(0, 10).map((p) => (
+                <ProductCard key={p.id} product={p} company={companies.find((c) => c.id === p.companyId)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ============ BEST SELLERS ============ */}
+        <section className="pt-12">
+          <SectionTitle title={`🔥 ${t.sections.bestSellers[lang]}`} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {bestSellers.map((p) => (
+              <ProductCard key={p.id} product={p} company={companies.find((c) => c.id === p.companyId)} />
+            ))}
+          </div>
+        </section>
+
+        {/* ============ CATEGORIES ============ */}
+        <section className="pt-12">
+          <SectionTitle title={t.sections.categories[lang]} />
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => openCategory(cat.key)}
+                className={`xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring ${isAgriCategory(cat.key) ? 'border-emerald-500/40 bg-emerald-500/5' : ''}`}
+              >
+                <span className="text-3xl block mb-2" aria-hidden>{cat.emoji}</span>
+                <span className="text-xs font-bold block">{lang === 'ar' ? cat.ar : cat.en}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* ============ FLAGSHIP STORE ============ */}
         {featured && (
           <section className="pt-12">
@@ -229,23 +311,6 @@ export function HomeView({
             </div>
           </section>
         )}
-
-        {/* ============ CATEGORIES ============ */}
-        <section className="pt-12">
-          <SectionTitle title={t.sections.categories[lang]} />
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => { setShopFilters({ category: cat.key, company: '', q: '' }); navigate({ name: 'shop' }) }}
-                className="xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <span className="text-3xl block mb-2" aria-hidden>{cat.emoji}</span>
-                <span className="text-xs font-bold block">{lang === 'ar' ? cat.ar : cat.en}</span>
-              </button>
-            ))}
-          </div>
-        </section>
 
         {/* ============ ALL COMPANY SHELVES ============ */}
         <section className="pt-12">
@@ -313,16 +378,6 @@ export function HomeView({
                   </div>
                 </div>
               ))}
-          </div>
-        </section>
-
-        {/* ============ BEST SELLERS ============ */}
-        <section className="pt-12">
-          <SectionTitle title={`🔥 ${t.sections.bestSellers[lang]}`} />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {bestSellers.map((p) => (
-              <ProductCard key={p.id} product={p} company={companies.find((c) => c.id === p.companyId)} />
-            ))}
           </div>
         </section>
 
