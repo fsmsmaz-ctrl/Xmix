@@ -5,7 +5,7 @@ import { SlidersHorizontal, Search, RotateCcw, ChevronDown } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
-import { CATEGORIES } from '@/lib/types'
+import { CATEGORIES, AGRI_CATEGORY_KEYS, AGRI_FILTER_PRESET } from '@/lib/types'
 import { ProductCard } from './ProductCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,7 +32,12 @@ export function ShopView({
     let list = products.filter((p) => {
       const company = companies.find((c) => c.id === p.companyId)
       if (filters.company && p.companyId !== filters.company) return false
-      if (filters.category && p.category !== filters.category) return false
+      if (filters.category === AGRI_FILTER_PRESET) {
+        // فلتر جاهز: كل العائلة الزراعية والمحلية معاً (منتجات + محاصيل + بذور + محليات)
+        if (!AGRI_CATEGORY_KEYS.includes(p.category)) return false
+      } else if (filters.category && p.category !== filters.category) {
+        return false
+      }
       if (filters.kind && (p.kind ?? 'product') !== filters.kind) return false
       if (filters.minPrice && p.price < Number(filters.minPrice)) return false
       if (filters.maxPrice && p.price > Number(filters.maxPrice)) return false
@@ -124,6 +129,7 @@ export function ShopView({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">{t.filters.all[lang]}</SelectItem>
+            <SelectItem value={AGRI_FILTER_PRESET}>🌾 {t.filters.agriAll[lang]}</SelectItem>
             {CATEGORIES.map((cat) => (
               <SelectItem key={cat.key} value={cat.key}>
                 {cat.emoji} {lang === 'ar' ? cat.ar : cat.en}
