@@ -14,7 +14,13 @@ export function CartView() {
   const navigate = useXmix((s) => s.navigate)
 
   const { subtotal, shipping, total } = cartTotals(cart)
-  const remain = FREE_SHIPPING_THRESHOLD - subtotal
+  // «أضف للتوصيل المجاني» يُحسب على قيمة البضائع فقط (الخدمات لا تُشحن)
+  const goodsSubtotal = cart.reduce(
+    (s, c) => (c.kind === 'service' ? s : s + c.price * c.qty),
+    0,
+  )
+  const remain = goodsSubtotal > 0 ? FREE_SHIPPING_THRESHOLD - goodsSubtotal : 0
+  const hasServices = cart.some((c) => c.kind === 'service')
 
   if (cart.length === 0) {
     return (
@@ -111,6 +117,11 @@ export function CartView() {
             {remain > 0 && (
               <p className="text-[11px] text-amber-400 bg-amber-400/10 rounded-lg px-3 py-2 leading-relaxed">
                 🚚 {t.cart.remainFree[lang].replace('{x}', fmtPrice(remain, lang))}
+              </p>
+            )}
+            {hasServices && (
+              <p className="text-[11px] text-fuchsia-300/90 bg-fuchsia-500/10 rounded-lg px-3 py-2 leading-relaxed">
+                {t.cart.servicesNoShipping[lang]}
               </p>
             )}
             <div className="border-t pt-3 flex justify-between text-base">
