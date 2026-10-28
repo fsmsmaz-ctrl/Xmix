@@ -33,6 +33,7 @@ export function CheckoutView() {
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   const { subtotal, shipping, total } = cartTotals(cart)
+  const hasServices = cart.some((c) => c.kind === 'service')
   const cities = lang === 'ar' ? OMAN_CITIES_AR : OMAN_CITIES_EN
 
   if (cart.length === 0) {
@@ -221,6 +222,11 @@ export function CheckoutView() {
                 {shipping === 0 ? t.cart.free[lang] : fmtPrice(shipping, lang)}
               </span>
             </div>
+            {hasServices && (
+              <p className="text-[11px] text-fuchsia-300/90 bg-fuchsia-500/10 rounded-lg px-3 py-2 leading-relaxed">
+                {t.cart.servicesNoShipping[lang]}
+              </p>
+            )}
             <div className="border-t pt-2.5 flex justify-between text-base">
               <span className="font-bold">{t.cart.total[lang]}</span>
               <span className="font-black text-primary">{fmtPrice(total, lang)}</span>
