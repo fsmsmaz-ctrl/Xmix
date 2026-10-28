@@ -26,6 +26,10 @@ export function HomeView({
   const lang = useXmix((s) => s.lang)
   const navigate = useXmix((s) => s.navigate)
   const setShopFilters = useXmix((s) => s.setShopFilters)
+  const interests = useXmix((s) => s.interests)
+  const interestsStale = useXmix((s) => s.interestsStale)
+  const openInterests = useXmix((s) => s.openInterests)
+  const dismissStaleBanner = useXmix((s) => s.dismissStaleBanner)
   const isRTL = lang === 'ar'
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
@@ -65,6 +69,17 @@ export function HomeView({
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
     [products],
   )
+
+  // «مختارات لك»: عروض من الأقسام التي اختارها الزبون في نافذة الاهتمامات
+  // — الأكثر مبيعاً أولاً ثم الأعلى تقييماً، ولا تظهر إلا لمن حدّد اهتمامات فعلياً
+  const picks = useMemo(() => {
+    if (interests.length === 0) return []
+    return products
+      .filter((p) => interests.includes(p.category))
+      .sort((a, b) =>
+        Number(b.isBestSeller) - Number(a.isBestSeller) || b.rating - a.rating)
+      .slice(0, 10)
+  }, [products, interests])
 
   return (
     <div className="pb-16">
@@ -159,6 +174,21 @@ export function HomeView({
       </section>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* ============ تذكير دوري لطيف: حدّث اهتماماتك (كل أسبوعين) ============ */}
+        {interestsStale && (
+          <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+            <p className="text-sm font-bold">🎯 {t.onboarding.staleBanner[lang]}</p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={openInterests} className="rounded-xl font-bold shadow-md shadow-violet-900/30">
+                {t.onboarding.updateCta[lang]}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={dismissStaleBanner} className="rounded-xl">
+                {t.onboarding.later[lang]}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ============ THREE PILLARS: PRODUCTS · SERVICES · DELIVERY ============ */}
         <section className="pt-12">
           <SectionTitle title={t.pillars.title[lang]} subtitle={t.pillars.subtitle[lang]} />
@@ -217,6 +247,31 @@ export function HomeView({
           </div>
         </section>
 
+        {/* ============ مختارات لك — بناءً على اهتمامات الزبون ============ */}
+        {picks.length > 0 && (
+          <section className="pt-12">
+            <SectionTitle
+              title={`🎯 ${t.sections.picksForYou[lang]}`}
+              subtitle={t.sections.picksDesc[lang]}
+              action={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openCategory(interests[0])}
+                  className="gap-1.5 rounded-xl font-bold"
+                >
+                  {t.sections.viewAll[lang]} <ArrowIcon size={15} />
+                </Button>
+              }
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {picks.map((p) => (
+                <ProductCard key={p.id} product={p} company={companies.find((c) => c.id === p.companyId)} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ============ AGRI & LOCAL MARKET — قلب السوق ============ */}
         {agriProducts.length > 0 && (
           <section className="pt-12">
@@ -272,16 +327,22 @@ export function HomeView({
         <section className="pt-12">
           <SectionTitle title={t.sections.categories[lang]} />
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => openCategory(cat.key)}
-                className={`xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring ${isAgriCategory(cat.key) ? 'border-emerald-500/40 bg-emerald-500/5' : ''}`}
-              >
-                <span className="text-3xl block mb-2" aria-hidden>{cat.emoji}</span>
-                <span className="text-xs font-bold block">{lang === 'ar' ? cat.ar : cat.en}</span>
-              </button>
-            ))}
+            {CATEGORIES.map((cat) => {
+              const fav = interests.includes(cat.key)
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => openCategory(cat.key)}
+                  className={`relative xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring ${isAgriCategory(cat.key) ? 'border-emerald-500/40 bg-emerald-500/5' : ''} ${fav ? 'ring-2 ring-primary/50' : ''}`}
+                >
+                  {fav && (
+                    <span className="absolute top-2 end-2 text-[11px] text-primary" aria-hidden>♥</span>
+                  )}
+                  <span className="text-3xl block mb-2" aria-hidden>{cat.emoji}</span>
+                  <span className="text-xs font-bold block">{lang === 'ar' ? cat.ar : cat.en}</span>
+                </button>
+              )
+            })}
           </div>
         </section>
 
