@@ -68,7 +68,12 @@ export async function POST(req: NextRequest) {
       ? Math.min(999, Math.max(1, Number.isFinite(stockRaw) ? Math.floor(stockRaw) || 10 : 10))
       : Number.isFinite(stockRaw) ? Math.max(0, Math.floor(stockRaw)) : 20
     const emoji = cleanStr(body.emoji, 8)
-      || (category === 'agri-labor' ? '👷' : category === 'agri-services' ? '🚜' : kind === 'service' ? '🛠️' : '🛍️')
+      || (category === 'agri-labor' ? '👷'
+        : category === 'agri-services' ? '🚜'
+        : category === 'cafe' ? '☕'
+        : category === 'fresh-fish' ? '🐟'
+        : category === 'animals' ? '🐑'
+        : kind === 'service' ? '🛠️' : '🛍️')
     const gradient = cleanStr(body.gradient, 160) || 'linear-gradient(135deg,#8B5CF6,#6D28D9)'
 
     if (nameAr.length < 2 || nameEn.length < 2)
