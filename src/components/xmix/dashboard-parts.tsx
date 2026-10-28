@@ -37,6 +37,14 @@ const GRADIENTS = [
   { v: 'linear-gradient(135deg,#C084FC,#6B21A8)', label: 'أرجواني' },
 ]
 
+/* منتقي سريع لنوع الغرض المباع — يضبط القسم والنوع والرمز والطاقة دفعة واحدة */
+const PURPOSES = [
+  { key: 'crop', emoji: '🌾', labelKey: 'purposeCrop', category: 'agri-crops', kind: 'product', stock: '20' },
+  { key: 'product', emoji: '🧺', labelKey: 'purposeProduct', category: 'agri-products', kind: 'product', stock: '20' },
+  { key: 'service', emoji: '🚜', labelKey: 'purposeService', category: 'agri-services', kind: 'service', stock: '10' },
+  { key: 'labor', emoji: '👷', labelKey: 'purposeLabor', category: 'agri-labor', kind: 'service', stock: '5' },
+] as const
+
 type ProductForm = {
   nameAr: string; nameEn: string; descAr: string; descEn: string
   price: string; oldPrice: string; stock: string
@@ -122,8 +130,8 @@ function ProductDialog({
         price: Number(form.price),
         // send 0 when cleared so the server nulls it (allows removing an old price)
         oldPrice: form.oldPrice ? Number(form.oldPrice) : 0,
-        // services are capacity-based — the server assigns 999; hide stock for them
-        stock: form.kind === 'service' ? 999 : (Number(form.stock) || 0),
+        // services are capacity-based (bookings/day or workers available) — server clamps 1..999
+        stock: Number(form.stock) || (form.kind === 'service' ? 10 : 20),
         // ordered gallery — first entry is the main display image
         image: imageUrls[0] ?? '',
         images: imageUrls.slice(1),
@@ -157,6 +165,33 @@ function ProductDialog({
             {editing ? d.editProduct[lang] : d.addProduct[lang]}
           </DialogTitle>
         </DialogHeader>
+
+        {/* نوع الغرض المباع — اختيار سريع يضبط القسم والنوع تلقائياً */}
+        <div className="space-y-2">
+          <Label className="text-sm font-black">{d.purposeField[lang]}</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {PURPOSES.map((p) => {
+              const active = form.category === p.category && form.kind === p.kind
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, category: p.category, kind: p.kind, emoji: p.emoji, stock: p.stock }))}
+                  aria-pressed={active}
+                  className={`rounded-xl border p-2.5 text-center transition-all ${
+                    active
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/40'
+                      : 'border-border hover:border-primary/50 hover:bg-secondary/40'
+                  }`}
+                >
+                  <span className="block text-xl" aria-hidden>{p.emoji}</span>
+                  <span className="block text-[11px] font-bold leading-tight mt-1">{d[p.labelKey][lang]}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[11px] text-muted-foreground">{d.purposeHint[lang]}</p>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <ProductImagesField
@@ -200,6 +235,11 @@ function ProductDialog({
               <Label>{d.price[lang]} (OMR)</Label>
               <Input type="number" min="0.001" step="0.001" value={form.price}
                 onChange={(e) => set('price', e.target.value)} className="rounded-xl" />
+              {form.category === 'agri-labor' ? (
+                <p className="text-[10px] text-muted-foreground leading-relaxed">{d.laborPriceHint[lang]}</p>
+              ) : form.kind === 'service' ? (
+                <p className="text-[10px] text-muted-foreground leading-relaxed">{d.servicePriceHint[lang]}</p>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label>{d.oldPrice[lang]}</Label>
@@ -208,14 +248,16 @@ function ProductDialog({
             </div>
             {form.kind === 'service' ? (
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground">
-                  {form.category === 'agri-labor' ? d.laborCapacity[lang] : d.stockService[lang]}
-                </Label>
-                <div className="h-10 rounded-xl border border-dashed border-border bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground px-2 text-center">
-                  {form.category === 'agri-labor'
-                    ? d.laborCapacityNote[lang]
-                    : lang === 'ar' ? 'الحجز مفتوح' : 'Open for booking'}
-                </div>
+                <Label>{form.category === 'agri-labor' ? d.laborCapacity[lang] : d.serviceCapacity[lang]}</Label>
+                <Input
+                  type="number" min="1" max="999" value={form.stock}
+                  onChange={(e) => set('stock', e.target.value)}
+                  className="rounded-xl"
+                  dir="ltr"
+                />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  {form.category === 'agri-labor' ? d.laborCapacityNote[lang] : d.serviceCapacityNote[lang]}
+                </p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -233,9 +275,12 @@ function ProductDialog({
               onChange={(e) => {
                 const kind = e.target.value as 'product' | 'service'
                 setForm((f) => {
-                  // الاتساق مع القسم الزراعي: التحويل للخدمة يغيّر القسم الزراعي المادي إلى «خدمات زراعية» والعكس
+                  // الاتساق مع القسم: التحويل للخدمة ينقل الأقسام المادية إلى قسم خدمات
+                  // (الزراعية المادية → خدمات زراعية، والأسماك/الحيوانات/الكافيهات → خدمات عامة)
                   let category = f.category
-                  if (kind === 'service' && AGRI_GOODS_KEYS.includes(f.category)) category = 'agri-services'
+                  if (kind === 'service' && kindForCategory(f.category) === 'product') {
+                    category = AGRI_GOODS_KEYS.includes(f.category) ? 'agri-services' : 'services'
+                  }
                   if (kind === 'product' && AGRI_SERVICE_KEYS.includes(f.category)) category = 'agri-products'
                   const emoji = kind === 'service' && f.emoji === '🛍️'
                     ? (category === 'agri-labor' ? '👷' : category === 'agri-services' ? '🚜' : '🛠️')
