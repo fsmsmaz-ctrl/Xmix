@@ -54,11 +54,33 @@ interface XmixState {
   shopFilters: ShopFilters
   setShopFilters: (f: Partial<ShopFilters>) => void
   resetShopFilters: () => void
+
+  /* اهتمامات الزبون — تُجمع من نافذة الترحيب وتُستخدم لعرض «مختارات لك» */
+  interests: string[]
+  /** هل أجاب الزبون على نافذة الاهتمامات مرة واحدة على الأقل (أو تخطاها)؟ */
+  interestsTouched: boolean
+  /** إصدار خيارات الاهتمامات — رفعه يجعل النافذة تظهر مجدداً للجميع */
+  interestsVersion: number
+  /** آخر مرة ظهرت فيها النافذة/التنبيه (للتذكير الدوري كل 14 يوماً) */
+  interestsPromptedAt: number
+  interestsStale: boolean
+  interestsModalOpen: boolean
+  openInterests: () => void
+  closeInterests: () => void
+  saveInterests: (cats: string[]) => void
+  skipInterests: () => void
+  dismissStaleBanner: () => void
+  refreshStale: () => void
 }
 
 export const DEFAULT_FILTERS: ShopFilters = {
   q: '', company: '', category: '', kind: '', minPrice: '', maxPrice: '', sort: 'featured',
 }
+
+/** ارفع الرقم عند تعديل خيارات الاهتمامات لتظهر نافذة الترحيب مجدداً للزبائن القدامى */
+export const INTERESTS_VERSION = 1
+/** بعد هذه المدة يظهر تنبيه لطيف لتحديث الاهتمامات (14 يوماً) */
+export const INTERESTS_STALE_MS = 14 * 24 * 60 * 60 * 1000
 
 export const useXmix = create<XmixState>()(
   persist(
@@ -118,10 +140,51 @@ export const useXmix = create<XmixState>()(
       shopFilters: DEFAULT_FILTERS,
       setShopFilters: (f) => set({ shopFilters: { ...get().shopFilters, ...f } }),
       resetShopFilters: () => set({ shopFilters: DEFAULT_FILTERS }),
+
+      interests: [],
+      interestsTouched: false,
+      interestsVersion: 0,
+      interestsPromptedAt: 0,
+      interestsStale: false,
+      interestsModalOpen: false,
+      openInterests: () => set({ interestsModalOpen: true }),
+      closeInterests: () => set({ interestsModalOpen: false }),
+      saveInterests: (cats) =>
+        set({
+          interests: cats,
+          interestsTouched: true,
+          interestsVersion: INTERESTS_VERSION,
+          interestsPromptedAt: Date.now(),
+          interestsStale: false,
+          interestsModalOpen: false,
+        }),
+      skipInterests: () =>
+        set({
+          interestsTouched: true,
+          interestsVersion: INTERESTS_VERSION,
+          interestsPromptedAt: Date.now(),
+          interestsModalOpen: false,
+        }),
+      dismissStaleBanner: () =>
+        set({ interestsStale: false, interestsPromptedAt: Date.now() }),
+      refreshStale: () => {
+        const s = get()
+        set({
+          interestsStale:
+            s.interestsTouched && Date.now() - s.interestsPromptedAt > INTERESTS_STALE_MS,
+        })
+      },
     }),
     {
       name: 'xmix-store',
-      partialize: (s) => ({ lang: s.lang, cart: s.cart }),
+      partialize: (s) => ({
+        lang: s.lang,
+        cart: s.cart,
+        interests: s.interests,
+        interestsTouched: s.interestsTouched,
+        interestsVersion: s.interestsVersion,
+        interestsPromptedAt: s.interestsPromptedAt,
+      }),
     }
   )
 )
