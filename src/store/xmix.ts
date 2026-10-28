@@ -194,7 +194,15 @@ export const SHIPPING_FEE = 2
 
 export function cartTotals(cart: CartItem[]) {
   const subtotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
-  const shipping = subtotal === 0 ? 0 : subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
+  // BUG-FIX (money integrity): التوصيل يُحسب على البضائع المادية فقط —
+  // الخدمات (حجوزات/عمالة باليومية) لا تُشحن أصلاً، وكانت تُحاسَب رسوم توصيل.
+  // السلات المحفوظة قبل إضافة kind تُعامل كمنتجات (سلوك قديم متوافق).
+  const goodsSubtotal = cart.reduce(
+    (sum, c) => (c.kind === 'service' ? sum : sum + c.price * c.qty),
+    0,
+  )
+  const shipping =
+    goodsSubtotal === 0 ? 0 : goodsSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE
   return { subtotal, shipping, total: subtotal + shipping }
 }
 
