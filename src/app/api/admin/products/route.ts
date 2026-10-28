@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { sanitizeImageList, splitGallery, syncProductImages } from '@/lib/product-images'
-import { isKnownCategory } from '@/lib/types'
+import { isKnownCategory, kindForCategory } from '@/lib/types'
 
 type ProductInput = {
   nameAr?: unknown; nameEn?: unknown; descAr?: unknown; descEn?: unknown
@@ -53,13 +53,22 @@ export async function POST(req: NextRequest) {
     // Category must be a known section (storefront categories or legacy 'general')
     if (!isKnownCategory(category))
       return NextResponse.json({ error: 'قسم غير معروف | Unknown category' }, { status: 400 })
-    // kind: 'product' (physical) or 'service' — anything else falls back to product
-    const kind = body.kind === 'service' ? 'service' : 'product'
-    // services are bookable — they get ample capacity instead of physical stock
+    // kind: 'product' (physical) or 'service'; agri sections force their matching kind
+    const kind = body.kind === 'service' ? 'service' : body.kind === 'product' ? 'product' : (kindForCategory(category) || 'product')
+    const forced = kindForCategory(category)
+    if (forced && kind !== forced)
+      return NextResponse.json(
+        { error: 'نوع العرض لا يطابق القسم المختار | Listing type does not match the category' },
+        { status: 400 },
+      )
+    // services are capacity-based (bookings/day or workers available): clamp 1..999;
+    // goods take physical stock >= 0 (default 20)
+    const stockRaw = Number(body.stock)
     const stock = kind === 'service'
-      ? 999
-      : Number.isFinite(Number(body.stock)) ? Math.max(0, Math.floor(Number(body.stock))) : 20
-    const emoji = cleanStr(body.emoji, 8) || (kind === 'service' ? '🛠️' : '🛍️')
+      ? Math.min(999, Math.max(1, Number.isFinite(stockRaw) ? Math.floor(stockRaw) || 10 : 10))
+      : Number.isFinite(stockRaw) ? Math.max(0, Math.floor(stockRaw)) : 20
+    const emoji = cleanStr(body.emoji, 8)
+      || (category === 'agri-labor' ? '👷' : category === 'agri-services' ? '🚜' : kind === 'service' ? '🛠️' : '🛍️')
     const gradient = cleanStr(body.gradient, 160) || 'linear-gradient(135deg,#8B5CF6,#6D28D9)'
 
     if (nameAr.length < 2 || nameEn.length < 2)
