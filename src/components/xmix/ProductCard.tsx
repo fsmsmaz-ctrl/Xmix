@@ -88,7 +88,9 @@ export function ProductCard({
           <span
             className={`absolute start-2 ${badge ? 'top-9' : 'top-2'} text-[10px] font-extrabold bg-fuchsia-600/85 backdrop-blur text-white rounded-full px-2.5 py-1 border border-white/15`}
           >
-            🛠️ {lang === 'ar' ? 'خدمة' : 'Service'}
+            {product.category === 'agri-labor'
+              ? (lang === 'ar' ? '👷 عمالة يومية' : '👷 Daily labor')
+              : `🛠️ ${lang === 'ar' ? 'خدمة' : 'Service'}`}
           </span>
         )}
         {product.oldPrice && product.oldPrice > product.price && (
