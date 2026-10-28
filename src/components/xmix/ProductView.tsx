@@ -45,6 +45,7 @@ export function ProductView({
   const desc = lang === 'ar' ? product.descAr : product.descEn
   const badge = lang === 'ar' ? product.badgeAr : product.badgeEn
   const isService = (product.kind ?? 'product') === 'service'
+  const isLabor = product.category === 'agri-labor'
 
   const related = products
     .filter((p) => p.id !== product.id && (p.category === product.category || p.companyId === product.companyId))
@@ -121,19 +122,31 @@ export function ProductView({
                     : 'bg-violet-500/15 text-violet-300 border-violet-500/30'
                 }`}
               >
-                {isService ? `🛠️ ${t.product.kindService[lang]}` : `📦 ${t.product.kindProduct[lang]}`}
+                {isService
+                  ? (isLabor ? t.product.kindLabor[lang] : `🛠️ ${t.product.kindService[lang]}`)
+                  : `📦 ${t.product.kindProduct[lang]}`}
               </span>
             </div>
           </div>
 
           <PriceTag price={product.price} oldPrice={product.oldPrice} lang={lang} size="lg" />
+          {isLabor && (
+            <p className="text-xs font-semibold text-muted-foreground -mt-1">👷 {t.product.wageNote[lang]}</p>
+          )}
+          {isService && !isLabor && (
+            <p className="text-xs font-semibold text-muted-foreground -mt-1">📅 {t.product.serviceUnit[lang]}</p>
+          )}
 
           {/* stock / availability */}
           <div>
             {product.stock <= 0 ? (
               <span className="text-sm font-bold text-rose-400">✕ {isService ? t.product.outOfCapacity[lang] : t.product.outOfStock[lang]}</span>
             ) : isService ? (
-              <span className="text-sm font-bold text-emerald-400">✓ {t.product.available[lang]}</span>
+              isLabor ? (
+                <span className="text-sm font-bold text-sky-400">👷 {t.product.workersAvailable[lang]}: {product.stock}</span>
+              ) : (
+                <span className="text-sm font-bold text-emerald-400">✓ {t.product.available[lang]} — {t.product.capacityAvailable[lang]}: {product.stock}</span>
+              )
             ) : product.stock <= 10 ? (
               <span className="text-sm font-bold text-amber-400">⚡ {t.product.lowStock[lang]} — {product.stock}</span>
             ) : (
