@@ -130,6 +130,10 @@ export const t = {
     checkout: { ar: 'إتمام الطلب', en: 'Checkout' },
     items: { ar: 'منتج', en: 'items' },
     remainFree: { ar: 'أضف {x} للتوصيل المجاني', en: 'Add {x} more for free delivery' },
+    servicesNoShipping: {
+      ar: '🛠️ الخدمات والحجوزات في سلتك لا تُحسب عليها رسوم توصيل.',
+      en: '🛠️ Services and bookings in your cart are not charged delivery.',
+    },
   },
   checkout: {
     title: { ar: 'إتمام الطلب', en: 'Checkout' },
@@ -341,6 +345,9 @@ export const t = {
     purposeProduct: { ar: 'منتج', en: 'Product' },
     purposeService: { ar: 'خدمة زراعية', en: 'Agri service' },
     purposeLabor: { ar: 'عمالة باليومية', en: 'Daily labor' },
+    purposeCafe: { ar: 'كافيه وقهوة', en: 'Café & coffee' },
+    purposeFish: { ar: 'أسماك طازجة', en: 'Fresh fish' },
+    purposeAnimals: { ar: 'حيوانات ومواشي', en: 'Animals & livestock' },
     serviceCapacity: { ar: 'الطاقة اليومية للحجز', en: 'Daily booking capacity' },
     serviceCapacityNote: { ar: 'عدد الحجوزات أو المهام المتاحة يومياً', en: 'Bookings or tasks available per day' },
     laborPriceHint: { ar: 'السعر = أجر العامل الواحد لليوم الواحد (ر.ع.)', en: 'Price = wage per worker per day (OMR)' },
