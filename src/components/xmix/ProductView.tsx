@@ -60,6 +60,7 @@ export function ProductView({
     gradient: product.gradient,
     price: product.price,
     stock: product.stock,
+    kind: isService ? ('service' as const) : ('product' as const),
     companyAr: company?.nameAr ?? '',
     companyEn: company?.nameEn ?? '',
   }
