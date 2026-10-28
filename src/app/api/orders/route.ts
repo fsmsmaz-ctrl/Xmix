@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
     }
 
     let subtotal = 0
+    // BUG-FIX (money integrity): التوصيل على البضائع المادية فقط —
+    // الخدمات (حجوزات/عمالة) لا تُشحن، ويجب أن يطابق الخادم حساب العميل.
+    let goodsSubtotal = 0
     const rows: {
       productId: string
       nameAr: string
@@ -77,6 +80,7 @@ export async function POST(req: NextRequest) {
         )
       }
       subtotal += p.price * qty
+      if (p.kind !== 'service') goodsSubtotal += p.price * qty
       rows.push({
         productId: p.id, nameAr: p.nameAr, nameEn: p.nameEn, emoji: p.emoji,
         price: p.price, qty, companyId: p.companyId,
@@ -87,7 +91,8 @@ export async function POST(req: NextRequest) {
     if (rows.length === 0)
       return NextResponse.json({ error: 'لا توجد عناصر صالحة | No valid items' }, { status: 400 })
 
-    const shipping = subtotal >= 50 ? 0 : 2
+    // نفس منطق cartTotals في العميل: الشحن يُحتسب على قيمة البضائع فقط
+    const shipping = goodsSubtotal === 0 ? 0 : goodsSubtotal >= 50 ? 0 : 2
     const total = subtotal + shipping
     // Random suffix avoids unique-constraint collisions under concurrency
     const orderNumber = `XM-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 4).toUpperCase()}`
