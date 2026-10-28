@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, ShoppingCart, Globe, Menu, LogOut, Package, UserRound, LayoutDashboard, ShieldCheck } from 'lucide-react'
+import { Search, ShoppingCart, Globe, Menu, LogOut, Package, UserRound, LayoutDashboard, ShieldCheck, Target } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import { Logo } from '@/components/xmix/Logo'
@@ -26,6 +26,7 @@ export function Header() {
   const user = useXmix((s) => s.user)
   const setUser = useXmix((s) => s.setUser)
   const openAuth = useXmix((s) => s.openAuth)
+  const openInterests = useXmix((s) => s.openInterests)
   const setShopFilters = useXmix((s) => s.setShopFilters)
 
   const [q, setQ] = useState('')
@@ -105,6 +106,18 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 ms-auto md:ms-0">
+            {/* interests — reopen the onboarding/picks preferences anytime */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openInterests}
+              className="rounded-xl"
+              aria-label={t.onboarding.interestsButton[lang]}
+              title={t.onboarding.interestsButton[lang]}
+            >
+              <Target size={18} />
+            </Button>
+
             {/* language */}
             <Button
               variant="ghost"
