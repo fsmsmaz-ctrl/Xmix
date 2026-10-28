@@ -187,7 +187,7 @@ export interface AdminOrder {
   myTotal: number
 }
 
-/* أقسام السوق — أنواع الغرض الزراعي أولاً (محصول/منتج/بذور/محليات + خدمات وعمالة زراعية) ثم بقية الأقسام */
+/* أقسام السوق — أنواع الغرض الزراعي أولاً (محصول/منتج/بذور/محليات + خدمات وعمالة زراعية) ثم الأسواق الطازجة والحياة اليومية ثم بقية الأقسام */
 export const CATEGORIES = [
   { key: 'agri-crops', ar: 'محاصيل زراعية', en: 'Agricultural Crops', emoji: '🌾' },
   { key: 'agri-products', ar: 'منتجات زراعية', en: 'Agricultural Products', emoji: '🧺' },
@@ -195,6 +195,9 @@ export const CATEGORIES = [
   { key: 'local-products', ar: 'منتجات محلية', en: 'Local Products', emoji: '🫒' },
   { key: 'agri-services', ar: 'خدمات زراعية', en: 'Agricultural Services', emoji: '🚜' },
   { key: 'agri-labor', ar: 'عمالة زراعية باليومية', en: 'Farm Labor (Daily)', emoji: '👷' },
+  { key: 'fresh-fish', ar: 'أسماك طازجة', en: 'Fresh Fish', emoji: '🐟' },
+  { key: 'animals', ar: 'حيوانات ومواشي', en: 'Animals & Livestock', emoji: '🐑' },
+  { key: 'cafe', ar: 'كافيهات وقهوة', en: 'Cafés & Coffee', emoji: '☕' },
   { key: 'grocery', ar: 'بقالة وطعام', en: 'Grocery & Food', emoji: '🛒' },
   { key: 'home', ar: 'منزل ومعيشة', en: 'Home & Living', emoji: '🏠' },
   { key: 'electronics', ar: 'إلكترونيات', en: 'Electronics', emoji: '📱' },
@@ -214,6 +217,9 @@ export const AGRI_GOODS_KEYS: readonly string[] = ['agri-crops', 'agri-products'
 /** الأقسام الزراعية الخدمية (خدمة زراعية / عمالة باليومية) — تُطلب بالحجز ولا تُخصم منها أكمية */
 export const AGRI_SERVICE_KEYS: readonly string[] = ['agri-services', 'agri-labor']
 
+/** الأقسام المادية حصراً — تُباع بالمخزون ولا تقبل نوع «خدمة» (تشمل الزراعية المادية + الأسماك والحيوانات والكافيهات) */
+export const GOODS_ONLY_KEYS: readonly string[] = [...AGRI_GOODS_KEYS, 'fresh-fish', 'animals', 'cafe']
+
 /** قيمة فلتر جاهزة في المتجر: عرض كل الأقسام الزراعية والمحلية معاً */
 export const AGRI_FILTER_PRESET = 'agri'
 
@@ -224,8 +230,8 @@ export function isAgriCategory(v: string): boolean {
 
 /** نوع العرض الملزم للقسم — '' إذا كان القسم حرّاً (المنتج/الخدمة كلاهما مسموح) */
 export function kindForCategory(category: string): 'product' | 'service' | '' {
-  if (AGRI_GOODS_KEYS.includes(category)) return 'product'
   if (AGRI_SERVICE_KEYS.includes(category)) return 'service'
+  if (GOODS_ONLY_KEYS.includes(category)) return 'product'
   return ''
 }
 
