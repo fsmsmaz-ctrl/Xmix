@@ -66,6 +66,8 @@ export interface CartItem {
   stock: number
   companyAr: string
   companyEn: string
+  /** 'service' = حجز/طلب خدمة (بلا توصيل) | 'product' = بضاعة تُشحن. اختياري للتوافق مع السلات المحفوظة سابقاً */
+  kind?: 'product' | 'service'
 }
 
 export interface OrderItemData {
