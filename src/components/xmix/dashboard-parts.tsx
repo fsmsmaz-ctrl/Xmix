@@ -43,6 +43,9 @@ const PURPOSES = [
   { key: 'product', emoji: '🧺', labelKey: 'purposeProduct', category: 'agri-products', kind: 'product', stock: '20' },
   { key: 'service', emoji: '🚜', labelKey: 'purposeService', category: 'agri-services', kind: 'service', stock: '10' },
   { key: 'labor', emoji: '👷', labelKey: 'purposeLabor', category: 'agri-labor', kind: 'service', stock: '5' },
+  { key: 'cafe', emoji: '☕', labelKey: 'purposeCafe', category: 'cafe', kind: 'product', stock: '20' },
+  { key: 'fish', emoji: '🐟', labelKey: 'purposeFish', category: 'fresh-fish', kind: 'product', stock: '20' },
+  { key: 'animals', emoji: '🐑', labelKey: 'purposeAnimals', category: 'animals', kind: 'product', stock: '20' },
 ] as const
 
 type ProductForm = {
@@ -169,7 +172,7 @@ function ProductDialog({
         {/* نوع الغرض المباع — اختيار سريع يضبط القسم والنوع تلقائياً */}
         <div className="space-y-2">
           <Label className="text-sm font-black">{d.purposeField[lang]}</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
             {PURPOSES.map((p) => {
               const active = form.category === p.category && form.kind === p.kind
               return (
