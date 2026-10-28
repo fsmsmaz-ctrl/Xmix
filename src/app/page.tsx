@@ -22,6 +22,7 @@ import { AboutView } from '@/components/xmix/AboutView'
 import { ContactView } from '@/components/xmix/ContactView'
 import { JoinView } from '@/components/xmix/JoinView'
 import { AuthModal } from '@/components/xmix/AuthModal'
+import { OnboardingModal } from '@/components/xmix/OnboardingModal'
 import { SkeletonStore, ErrorBlock } from '@/components/xmix/shared'
 
 /** Floating back-to-top button — appears after scrolling down. */
@@ -175,6 +176,7 @@ export default function XmixPage() {
 
       <Footer companies={companies} />
       <AuthModal />
+      <OnboardingModal />
       <BackToTop />
     </div>
   )
