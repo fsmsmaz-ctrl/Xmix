@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { sanitizeImageList, splitGallery, syncProductImages } from '@/lib/product-images'
-import { isKnownCategory } from '@/lib/types'
+import { isKnownCategory, kindForCategory } from '@/lib/types'
 
 function cleanStr(v: unknown, max = 400): string {
   return String(v ?? '').trim().slice(0, max)
@@ -52,10 +52,18 @@ export async function PATCH(
       data.category = cat
     }
     if (body.kind !== undefined) {
-      // only two kinds exist — service ignores physical stock and gets capacity
+      // only two kinds exist — service is capacity-based instead of physical stock
       data.kind = body.kind === 'service' ? 'service' : 'product'
-      if (data.kind === 'service') data.stock = 999
     }
+    // enforce category <-> kind consistency on the effective (post-update) values
+    const effCategory = (data.category as string | undefined) ?? product.category
+    const effKind = (data.kind as 'product' | 'service' | undefined) ?? (product.kind === 'service' ? 'service' : 'product')
+    const forced = kindForCategory(effCategory)
+    if (forced && effKind !== forced)
+      return NextResponse.json(
+        { error: 'نوع العرض لا يطابق القسم المختار | Listing type does not match the category' },
+        { status: 400 },
+      )
     if (body.badgeAr !== undefined) data.badgeAr = cleanStr(body.badgeAr, 40) || null
     if (body.badgeEn !== undefined) data.badgeEn = cleanStr(body.badgeEn, 40) || null
     if (body.isBestSeller !== undefined) data.isBestSeller = Boolean(body.isBestSeller)
@@ -75,7 +83,13 @@ export async function PATCH(
       const stock = Number(body.stock)
       if (!Number.isFinite(stock) || stock < 0)
         return NextResponse.json({ error: 'كمية غير صالحة | Invalid stock' }, { status: 400 })
-      data.stock = Math.floor(stock)
+      // services are capacity-based: clamp 1..999 (bookings/day or workers available)
+      data.stock = effKind === 'service'
+        ? Math.min(999, Math.max(1, Math.floor(stock)))
+        : Math.floor(stock)
+    } else if (data.kind === 'service' && product.kind !== 'service') {
+      // switching goods -> service without explicit capacity: reset to ample default
+      data.stock = 999
     }
 
     // ordered gallery — first entry is the main display image
