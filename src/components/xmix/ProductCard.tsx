@@ -42,6 +42,7 @@ export function ProductCard({
       gradient: product.gradient,
       price: product.price,
       stock: product.stock,
+      kind: isService ? 'service' : 'product',
       companyAr: company?.nameAr ?? '',
       companyEn: company?.nameEn ?? '',
     })
