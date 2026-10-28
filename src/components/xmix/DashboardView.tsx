@@ -8,6 +8,7 @@ import {
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { AdminOrder, AdminStats, Product } from '@/lib/types'
+import { categoryLabel } from '@/lib/types'
 import { fmtPrice } from '@/store/xmix'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -227,8 +228,16 @@ export function DashboardView() {
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {fmtPrice(p.price, lang)} · {p.kind === 'service' ? d.stockService[lang] : `${d.stock[lang]}: ${p.stock}`}
+                    <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center rounded-md bg-secondary/80 px-1.5 py-0.5 text-[10px] font-bold">
+                        {categoryLabel(p.category, lang)}
+                      </span>
+                      <span>{fmtPrice(p.price, lang)}</span>
+                      <span>· {p.kind === 'service'
+                        ? (p.category === 'agri-labor'
+                          ? `${d.workersCount[lang]}: ${p.stock}`
+                          : `${d.capacityShort[lang]}: ${p.stock}`)
+                        : `${d.stock[lang]}: ${p.stock}`}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
