@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
-import { cartTotals, fmtPrice, FREE_SHIPPING_THRESHOLD, useXmix } from '@/store/xmix'
+import { cartTotals, fmtPrice, FREE_SHIPPING_THRESHOLD, useXmix, reconcileCart } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/hooks/use-toast'
 
 export function CartView() {
   const lang = useXmix((s) => s.lang)
@@ -21,6 +23,17 @@ export function CartView() {
   )
   const remain = goodsSubtotal > 0 ? FREE_SHIPPING_THRESHOLD - goodsSubtotal : 0
   const hasServices = cart.some((c) => c.kind === 'service')
+
+  // BUG-FIX (سلة قديمة): مزامنة الأسعار/الكميات/التوفر مع الخادم عند فتح السلة
+  useEffect(() => {
+    let alive = true
+    void reconcileCart().then((changed) => {
+      if (alive && changed)
+        toast({ title: t.cart.synced[lang] })
+    })
+    return () => {
+      alive = false
+    }  }, [])
 
   if (cart.length === 0) {
     return (
