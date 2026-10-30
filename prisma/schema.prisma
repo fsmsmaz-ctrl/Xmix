@@ -22,6 +22,17 @@ model Company {
   gradient    String
   locationAr  String
   locationEn  String
+  /// استراتيجية «الأقرب إليك» — إحداثيات الرف التقريبية (مركز الولاية أو موقع GPS الذي التقطه التاجر)
+  lat         Float?
+  lng         Float?
+  /// مفتاح الولاية في سجل src/lib/geo.ts (مثل 'muscat' أو 'sohar')
+  cityKey     String?
+  /// هل يوفر الرف خدمة التوصيل؟ يدخل في ترتيب «الأقرب إليك»
+  hasDelivery Boolean @default(false)
+  /// رسوم التوصيل بالريال العماني (اختياري — يعرض للزبون)
+  deliveryFee Float?
+  /// زمن التوصيل التقريبي بالدقائق (اختياري)
+  deliveryEta Int?
   rating      Float     @default(4.5)
   isFeatured  Boolean   @default(false)
   /// pending = بانتظار موافقة المسؤول | active = معتمدة وظاهرة | suspended = موقوفة
