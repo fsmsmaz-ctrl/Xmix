@@ -12,6 +12,13 @@ import type { AdminOrder, AdminStats, Lang, Product } from '@/lib/types'
 import {
   CATEGORIES, AGRI_GOODS_KEYS, AGRI_SERVICE_KEYS, kindForCategory,
 } from '@/lib/types'
+import {
+  parseDetailsLine, stripDetailsLine, buildDetailsLine,
+  sanitizeUsedDetails, sanitizeFoodDetails, conditionLabel, conditionDescLabel,
+  usedSubLabel, mealLabel, prepLabel, allergenChip, formatCutoff,
+  USED_SUBTYPES, USED_CONDITIONS, FOOD_MEALS, FOOD_CUTOFFS, FOOD_ALLERGENS, FOOD_PREPS, WEEKDAY_ORDER,
+  type ListingDetails,
+} from '@/lib/details'
 import { fmtPrice } from '@/store/xmix'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,7 +53,23 @@ const PURPOSES = [
   { key: 'cafe', emoji: '☕', labelKey: 'purposeCafe', category: 'cafe', kind: 'product', stock: '20' },
   { key: 'fish', emoji: '🐟', labelKey: 'purposeFish', category: 'fresh-fish', kind: 'product', stock: '20' },
   { key: 'animals', emoji: '🐑', labelKey: 'purposeAnimals', category: 'animals', kind: 'product', stock: '20' },
+  { key: 'used', emoji: '♻️', labelKey: 'purposeUsed', category: 'used-items', kind: 'product', stock: '5' },
+  { key: 'homefood', emoji: '🍲', labelKey: 'purposeHomeFood', category: 'home-food', kind: 'product', stock: '10' },
 ] as const
+
+/** تبديل يوم في قائمة أيام التوفر */
+function toggleDay(days: number[] | undefined, d: number): number[] | undefined {
+  const cur = days ?? []
+  const next = cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d]
+  return next.length ? next : undefined
+}
+
+/** تبديل عنصر في قائمة مواد الحساسية */
+function toggleAllergen(list: string[] | undefined, key: string): string[] | undefined {
+  const cur = list ?? []
+  const next = cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]
+  return next.length ? next : undefined
+}
 
 type ProductForm = {
   nameAr: string; nameEn: string; descAr: string; descEn: string
@@ -54,6 +77,8 @@ type ProductForm = {
   category: string; kind: 'product' | 'service'
   emoji: string; gradient: string
   badgeAr: string; badgeEn: string; isBestSeller: boolean
+  /** تفاصيل الأقسام الخاصة (المستعمل/الأكلات المنزلية) — تُدمج في الوصف عند الحفظ */
+  xd: ListingDetails
 }
 
 const EMPTY_FORM: ProductForm = {
@@ -61,19 +86,23 @@ const EMPTY_FORM: ProductForm = {
   price: '', oldPrice: '', stock: '20',
   category: 'general', kind: 'product', emoji: '🛍️', gradient: GRADIENTS[0].v,
   badgeAr: '', badgeEn: '', isBestSeller: false,
+  xd: {},
 }
 
 function formFromProduct(p: Product): ProductForm {
   const kind = p.kind === 'service' ? 'service' : 'product'
+  // استخراج سطر التفاصيل من الوصف حتى لا يراه التاجر نصاً خاماً
+  const parsedAr = parseDetailsLine(p.descAr)
   return {
     nameAr: p.nameAr, nameEn: p.nameEn,
-    descAr: p.descAr === p.nameAr ? '' : p.descAr,
-    descEn: p.descEn === p.nameEn ? '' : p.descEn,
+    descAr: parsedAr.details ? parsedAr.text : (p.descAr === p.nameAr ? '' : p.descAr),
+    descEn: p.descEn === p.nameEn ? '' : stripDetailsLine(p.descEn),
     price: String(p.price), oldPrice: p.oldPrice ? String(p.oldPrice) : '',
     stock: String(p.stock), category: p.category, kind,
     emoji: p.emoji,
     gradient: p.gradient, badgeAr: p.badgeAr ?? '', badgeEn: p.badgeEn ?? '',
     isBestSeller: p.isBestSeller,
+    xd: parsedAr.details ?? {},
   }
 }
 
@@ -103,6 +132,21 @@ function ProductDialog({
   const set = (k: keyof ProductForm, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }))
 
+  /** تحديث تفاصيل الأقسام الخاصة (المستعمل/الأكلات) */
+  const setXd = (patch: Partial<ListingDetails>) =>
+    setForm((f) => ({ ...f, xd: { ...f.xd, ...patch } }))
+
+  /** الأقسام ذات التفاصيل: يُبنى سطر [[XMIX-D]] ويُسبق الوصف — غيرها يُنظّف من أي سطر قديم */
+  const composeDesc = (): { descAr: string; descEn: string } => {
+    const userAr = stripDetailsLine(form.descAr).trim() || form.nameAr
+    const userEn = stripDetailsLine(form.descEn).trim() || form.nameEn
+    let line: string | null = null
+    if (form.category === 'used-items') line = buildDetailsLine(sanitizeUsedDetails(form.xd))
+    else if (form.category === 'home-food') line = buildDetailsLine(sanitizeFoodDetails(form.xd))
+    if (!line) return { descAr: userAr, descEn: userEn }
+    return { descAr: `${line}\n${userAr}`, descEn: `${line}\n${userEn}` }
+  }
+
   const submit = async () => {
     if (!form.nameAr.trim() || !form.nameEn.trim()) {
       toast({ title: lang === 'ar' ? 'الاسمان مطلوبان' : 'Both names are required', variant: 'destructive' })
@@ -128,8 +172,11 @@ function ProductDialog({
       }
       setUploadingCount(0)
 
+      const { xd: _xd, ...formRest } = form
+      const desc = composeDesc()
       const payload = {
-        ...form,
+        ...formRest,
+        ...desc,
         price: Number(form.price),
         // send 0 when cleared so the server nulls it (allows removing an old price)
         oldPrice: form.oldPrice ? Number(form.oldPrice) : 0,
@@ -172,7 +219,7 @@ function ProductDialog({
         {/* نوع الغرض المباع — اختيار سريع يضبط القسم والنوع تلقائياً */}
         <div className="space-y-2">
           <Label className="text-sm font-black">{d.purposeField[lang]}</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {PURPOSES.map((p) => {
               const active = form.category === p.category && form.kind === p.kind
               return (
@@ -307,14 +354,22 @@ function ProductDialog({
                 const cat = e.target.value
                 setForm((f) => {
                   // الأقسام الزراعية تفرض نوع العرض المناسب: محصول/منتج/بذور = مادي، خدمات/عمالة = خدمة
+                  // والمستعمل والأكلات المنزلية مادية حصراً
                   const forced = kindForCategory(cat)
                   if (forced && forced !== f.kind) {
                     const emoji = f.emoji === '🛍️'
-                      ? (cat === 'agri-labor' ? '👷' : cat === 'agri-services' ? '🚜' : forced === 'service' ? '🛠️' : f.emoji)
+                      ? (cat === 'agri-labor' ? '👷'
+                        : cat === 'agri-services' ? '🚜'
+                        : cat === 'used-items' ? '♻️'
+                        : cat === 'home-food' ? '🍲'
+                        : forced === 'service' ? '🛠️' : f.emoji)
                       : f.emoji
                     return { ...f, category: cat, kind: forced, emoji }
                   }
-                  return { ...f, category: cat }
+                  const emoji = f.emoji === '🛍️' && cat === 'used-items' ? '♻️'
+                    : f.emoji === '🛍️' && cat === 'home-food' ? '🍲'
+                    : f.emoji
+                  return { ...f, category: cat, emoji }
                 })
               }}
               className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
@@ -330,8 +385,179 @@ function ProductDialog({
               <p className="text-[11px] text-muted-foreground leading-relaxed">{d.agriServiceHint[lang]}</p>
             ) : AGRI_GOODS_KEYS.includes(form.category) ? (
               <p className="text-[11px] text-muted-foreground leading-relaxed">{d.agriGoodsHint[lang]}</p>
+            ) : form.category === 'used-items' ? (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{d.usedDetailsHint[lang]}</p>
+            ) : form.category === 'home-food' ? (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{d.foodDetailsHint[lang]}</p>
             ) : null}
           </div>
+
+          {/* ══ تفاصيل «اغراض مستعملة» ♻️ — تظهر فقط عند اختيار القسم ══ */}
+          {form.category === 'used-items' && (
+            <div className="sm:col-span-2 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <p className="text-sm font-black">♻️ {t.xd.usedSection[lang]}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>{t.xd.subType[lang]}</Label>
+                  <select
+                    value={form.xd.sub ?? ''}
+                    onChange={(e) => setXd({ sub: e.target.value || undefined })}
+                    className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+                  >
+                    <option value="">{lang === 'ar' ? 'بدون تحديد' : 'Unspecified'}</option>
+                    {USED_SUBTYPES.map((s) => (
+                      <option key={s} value={s}>{usedSubLabel(s, lang)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.cond[lang]}</Label>
+                  <select
+                    value={form.xd.cond ?? ''}
+                    onChange={(e) => setXd({ cond: e.target.value || undefined })}
+                    className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+                  >
+                    <option value="">{lang === 'ar' ? 'بدون تحديد' : 'Unspecified'}</option>
+                    {USED_CONDITIONS.map((c) => (
+                      <option key={c.key} value={c.key}>{conditionLabel(c.key, lang)}</option>
+                    ))}
+                  </select>
+                  {form.xd.cond && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{conditionDescLabel(form.xd.cond, lang)}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.age[lang]}</Label>
+                  <Input
+                    type="number" min="0" max="600" dir="ltr"
+                    value={form.xd.ageM ?? ''}
+                    onChange={(e) => setXd({ ageM: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    className="rounded-xl"
+                  />
+                  <p className="text-[10px] text-muted-foreground">{t.xd.ageHint[lang]}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.warranty[lang]}</Label>
+                  <Input
+                    type="number" min="0" max="120" dir="ltr"
+                    value={form.xd.warrantyM ?? ''}
+                    onChange={(e) => setXd({ warrantyM: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border border-border p-3 sm:col-span-2">
+                  <Switch checked={Boolean(form.xd.nego)} onCheckedChange={(v) => setXd({ nego: v })} />
+                  <span className="text-sm font-semibold">💬 {t.xd.nego[lang]}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══ تفاصيل «أكلات منزلية» 🍲 — تظهر فقط عند اختيار القسم ══ */}
+          {form.category === 'home-food' && (
+            <div className="sm:col-span-2 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4 space-y-3">
+              <p className="text-sm font-black">🍲 {t.xd.foodSection[lang]}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>{t.xd.meal[lang]}</Label>
+                  <select
+                    value={form.xd.meal ?? ''}
+                    onChange={(e) => setXd({ meal: e.target.value || undefined })}
+                    className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+                  >
+                    <option value="">{lang === 'ar' ? 'بدون تحديد' : 'Unspecified'}</option>
+                    {FOOD_MEALS.map((m) => (
+                      <option key={m} value={m}>{mealLabel(m, lang)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.portions[lang]}</Label>
+                  <Input
+                    type="number" min="1" max="99" dir="ltr"
+                    value={form.xd.portions ?? ''}
+                    onChange={(e) => setXd({ portions: e.target.value === '' ? undefined : Number(e.target.value) })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.cutoff[lang]}</Label>
+                  <select
+                    value={form.xd.cutoff ?? ''}
+                    onChange={(e) => setXd({ cutoff: e.target.value || undefined })}
+                    className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+                  >
+                    <option value="">{t.xd.cutoffNone[lang]}</option>
+                    {FOOD_CUTOFFS.map((c) => (
+                      <option key={c} value={c}>{formatCutoff(c, lang)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t.xd.prep[lang]}</Label>
+                  <select
+                    value={form.xd.prep ?? ''}
+                    onChange={(e) => setXd({ prep: e.target.value || undefined })}
+                    className="w-full h-10 rounded-xl border border-border bg-secondary/50 px-3 text-sm"
+                  >
+                    <option value="">{lang === 'ar' ? 'بدون تحديد' : 'Unspecified'}</option>
+                    {FOOD_PREPS.map((p) => (
+                      <option key={p} value={p}>{prepLabel(p, lang)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>{t.xd.days[lang]}</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {WEEKDAY_ORDER.map((day) => {
+                      const active = (form.xd.days ?? []).includes(day)
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => setXd({ days: toggleDay(form.xd.days, day) })}
+                          aria-pressed={active}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${
+                            active
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border text-muted-foreground hover:border-primary/40'
+                          }`}
+                        >
+                          {t.xd[`day${day}`][lang]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{t.xd.daysHint[lang]}</p>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>{t.xd.allergens[lang]}</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {FOOD_ALLERGENS.map((a) => {
+                      const active = (form.xd.allergens ?? []).includes(a.key)
+                      return (
+                        <button
+                          key={a.key}
+                          type="button"
+                          onClick={() => setXd({ allergens: toggleAllergen(form.xd.allergens, a.key) })}
+                          aria-pressed={active}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${
+                            active
+                              ? 'border-rose-500/60 bg-rose-500/10 text-rose-500'
+                              : 'border-border text-muted-foreground hover:border-rose-500/40'
+                          }`}
+                        >
+                          {allergenChip(a.key, lang)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">{t.xd.allergensHint[lang]}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>{d.emojiField[lang]}</Label>
             <Input value={form.emoji} onChange={(e) => set('emoji', e.target.value)} className="rounded-xl text-center text-lg" />
