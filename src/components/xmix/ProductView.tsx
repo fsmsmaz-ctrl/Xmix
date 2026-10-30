@@ -28,6 +28,7 @@ export function ProductView({
   const lang = useXmix((s) => s.lang)
   const navigate = useXmix((s) => s.navigate)
   const addToCart = useXmix((s) => s.addToCart)
+  const sessionChecked = useXmix((s) => s.sessionChecked)
   const [qty, setQty] = useState(1)
   const isRTL = lang === 'ar'
   const BackIcon = isRTL ? ArrowRight : ArrowLeft
@@ -75,7 +76,13 @@ export function ProductView({
   }
 
   const handleAdd = (buyNow = false) => {
-    addToCart(cartItem, qty)
+    // BUG-FIX (الطلب بلا حساب): نحترم قرار بوابة المخزن — الضيف لا
+    // يُضاف له شيء ولا يُنتقل للسلة، بل تُفتح له نافذة التسجيل
+    const added = addToCart(cartItem, qty)
+    if (!added) {
+      if (sessionChecked) toast({ title: t.cart.loginToAdd[lang], description: name })
+      return
+    }
     toast({ title: lang === 'ar' ? 'تمت الإضافة إلى السلة 🛒' : 'Added to cart 🛒', description: name })
     if (buyNow) navigate({ name: 'cart' })
   }
