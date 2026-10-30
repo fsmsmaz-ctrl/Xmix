@@ -18,6 +18,7 @@ type Body = {
 const ERR: Record<string, { ar: string; en: string; code: number }> = {
   USER_NOT_FOUND: { ar: 'الحساب غير موجود', en: 'User not found', code: 404 },
   CANNOT_PROMOTE_ADMIN: { ar: 'لا يمكن منح صلاحية تاجر لحساب مسؤول', en: 'Cannot promote an admin account', code: 400 },
+  ALREADY_MERCHANT: { ar: 'الحساب تاجر بالفعل ولديه رف — لا يمكن منحه رفاً ثانياً', en: 'Already a merchant with a shelf — cannot grant a second one', code: 409 },
   COMPANY_NAME_REQUIRED: { ar: 'اسم الشركة (عربي) مطلوب', en: 'Company name (Arabic) required', code: 400 },
   EMAIL_REQUIRED: { ar: 'بريد إلكتروني غير صالح', en: 'Invalid email', code: 400 },
 }
