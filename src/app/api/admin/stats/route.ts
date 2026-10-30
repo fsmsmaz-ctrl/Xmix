@@ -15,7 +15,12 @@ export async function GET() {
       db.product.count({ where: { companyId } }),
       db.product.aggregate({ where: { companyId }, _sum: { stock: true } }),
       db.product.count({ where: { companyId, stock: { lte: 5 } } }),
-      db.orderItem.findMany({ where: { companyId }, select: { price: true, qty: true, orderId: true } }),
+      // BUG-FIX (إيرادات نظيفة): بنود الطلبات الملغاة لم تُقبض قيمتها —
+      // كانت تُحتسب ضمن إيراد التاجر والوحدات المبيعة، والآن تُستبعد.
+      db.orderItem.findMany({
+        where: { companyId, order: { status: { not: 'cancelled' } } },
+        select: { price: true, qty: true, orderId: true },
+      }),
       db.product.findMany({ where: { companyId }, select: { price: true, stock: true } }),
       db.order.findMany({
         where: { items: { some: { companyId } } },
