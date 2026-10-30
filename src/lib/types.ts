@@ -201,11 +201,13 @@ export const CATEGORIES = [
   { key: 'animals', ar: 'حيوانات ومواشي', en: 'Animals & Livestock', emoji: '🐑' },
   { key: 'cafe', ar: 'كافيهات وقهوة', en: 'Cafés & Coffee', emoji: '☕' },
   { key: 'grocery', ar: 'بقالة وطعام', en: 'Grocery & Food', emoji: '🛒' },
+  { key: 'home-food', ar: 'أكلات منزلية', en: 'Home-Cooked Food', emoji: '🍲' },
   { key: 'home', ar: 'منزل ومعيشة', en: 'Home & Living', emoji: '🏠' },
   { key: 'electronics', ar: 'إلكترونيات', en: 'Electronics', emoji: '📱' },
   { key: 'fashion', ar: 'أزياء وملابس', en: 'Fashion', emoji: '👗' },
   { key: 'beauty', ar: 'جمال وعناية', en: 'Beauty & Care', emoji: '💄' },
   { key: 'services', ar: 'خدمات', en: 'Services', emoji: '🛠️' },
+  { key: 'used-items', ar: 'اغراض مستعملة', en: 'Used Items', emoji: '♻️' },
 ] as const
 
 /* العائلة الزراعية والمحلية — تُبرز كسوق متخصص في الرئيسية وتُعرض كفلتر جاهز في المتجر */
@@ -219,8 +221,16 @@ export const AGRI_GOODS_KEYS: readonly string[] = ['agri-crops', 'agri-products'
 /** الأقسام الزراعية الخدمية (خدمة زراعية / عمالة باليومية) — تُطلب بالحجز ولا تُخصم منها أكمية */
 export const AGRI_SERVICE_KEYS: readonly string[] = ['agri-services', 'agri-labor']
 
-/** الأقسام المادية حصراً — تُباع بالمخزون ولا تقبل نوع «خدمة» (تشمل الزراعية المادية + الأسماك والحيوانات والكافيهات) */
-export const GOODS_ONLY_KEYS: readonly string[] = [...AGRI_GOODS_KEYS, 'fresh-fish', 'animals', 'cafe']
+/** الأقسام المادية حصراً — تُباع بالمخزون ولا تقبل نوع «خدمة» (تشمل الزراعية المادية + الأسماك والحيوانات والكافيهات والأكلات المنزلية والمستعمل) */
+export const GOODS_ONLY_KEYS: readonly string[] = [...AGRI_GOODS_KEYS, 'fresh-fish', 'animals', 'cafe', 'home-food', 'used-items']
+
+/** أقسام ذات تفاصيل إضافية مرتبطة بنموذج التاجر (سطر تفاصيل داخل الوصف) */
+export const DETAILED_CATEGORY_KEYS: readonly string[] = ['used-items', 'home-food']
+
+/** هل القسم من أقسام التفاصيل الإضافية (المستعمل/الأكلات المنزلية)؟ */
+export function hasListingDetails(category: string): boolean {
+  return DETAILED_CATEGORY_KEYS.includes(category)
+}
 
 /** قيمة فلتر جاهزة في المتجر: عرض كل الأقسام الزراعية والمحلية معاً */
 export const AGRI_FILTER_PRESET = 'agri'
