@@ -3,6 +3,7 @@
 import { ShoppingCart, Images } from 'lucide-react'
 import type { Company, Lang, Product } from '@/lib/types'
 import { productGallery } from '@/lib/types'
+import { parseDetailsLine, detailChip } from '@/lib/details'
 import { useXmix } from '@/store/xmix'
 import { toast } from '@/hooks/use-toast'
 import { StarRating } from './shared'
@@ -27,6 +28,8 @@ export function ProductCard({
   const isService = (product.kind ?? 'product') === 'service'
   const gallery = productGallery(product)
   const photoCount = gallery.length
+  // شريحة تفاصيل القسم (المستعمل ♻️ / الأكلات المنزلية 🍲) — من سطر التفاصيل في الوصف
+  const xdChip = detailChip(product.category, parseDetailsLine(product.descAr).details, lang)
 
   const openProduct = () => navigate({ name: 'product', id: product.id })
 
@@ -115,6 +118,15 @@ export function ProductCard({
           </span>
         )}
         <h3 className="text-sm font-bold leading-snug line-clamp-2 min-h-[2.5rem]">{name}</h3>
+        {xdChip && (
+          <span className={`w-fit max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+            product.category === 'used-items'
+              ? 'bg-amber-500/12 text-amber-400'
+              : 'bg-orange-500/12 text-orange-400'
+          }`}>
+            {xdChip}
+          </span>
+        )}
         <div className="flex items-center gap-1.5">
           <StarRating rating={product.rating} size={12} />
           <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
