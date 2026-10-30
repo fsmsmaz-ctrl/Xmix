@@ -329,11 +329,19 @@ export function HomeView({
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {CATEGORIES.map((cat) => {
               const fav = interests.includes(cat.key)
+              // تمييز بصري: الزراعي أخضر، المستعمل كهرماني، الأكلات المنزلية برتقالي
+              const accent = isAgriCategory(cat.key)
+                ? 'border-emerald-500/40 bg-emerald-500/5'
+                : cat.key === 'used-items'
+                  ? 'border-amber-500/40 bg-amber-500/5'
+                  : cat.key === 'home-food'
+                    ? 'border-orange-500/40 bg-orange-500/5'
+                    : ''
               return (
                 <button
                   key={cat.key}
                   onClick={() => openCategory(cat.key)}
-                  className={`relative xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring ${isAgriCategory(cat.key) ? 'border-emerald-500/40 bg-emerald-500/5' : ''} ${fav ? 'ring-2 ring-primary/50' : ''}`}
+                  className={`relative xmix-card-hover rounded-2xl border bg-card p-4 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring ${accent} ${fav ? 'ring-2 ring-primary/50' : ''}`}
                 >
                   {fav && (
                     <span className="absolute top-2 end-2 text-[11px] text-primary" aria-hidden>♥</span>
