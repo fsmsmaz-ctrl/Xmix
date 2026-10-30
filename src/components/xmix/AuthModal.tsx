@@ -14,6 +14,7 @@ export function AuthModal() {
   const lang = useXmix((s) => s.lang)
   const authOpen = useXmix((s) => s.authOpen)
   const authMode = useXmix((s) => s.authMode)
+  const authReason = useXmix((s) => s.authReason)
   const closeAuth = useXmix((s) => s.closeAuth)
   const openAuth = useXmix((s) => s.openAuth)
   const setUser = useXmix((s) => s.setUser)
@@ -85,13 +86,21 @@ export function AuthModal() {
           <X size={19} />
         </button>
 
-        <div className="text-center mb-6">
+        <div className="text-center mb-5">
           <span className="relative inline-flex items-center justify-center mb-3">
             <span className="absolute h-16 w-16 rounded-3xl bg-violet-500/25 blur-lg" />
             <Logo size={56} className="relative rounded-2xl" priority />
           </span>
           <h2 className="text-lg font-black">{t.auth.welcome[lang]}</h2>
         </div>
+
+        {/* BUG-FIX (الطلب بلا حساب): سبب فتح النافذة — بدل نافذة دخول صامتة
+            يجهل الزبون لماذا ظهرت، نوضح: الحساب مطلوب لإضافة الغرض للسلة/الإتمام */}
+        {authReason === 'cart' && (
+          <p className="mb-5 text-xs font-semibold leading-relaxed text-violet-200 bg-violet-500/10 border border-violet-500/30 rounded-xl px-3.5 py-2.5 text-start">
+            {t.auth.reasonCart[lang]}
+          </p>
+        )}
 
         {/* tabs */}
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-secondary/60 p-1 mb-5">
