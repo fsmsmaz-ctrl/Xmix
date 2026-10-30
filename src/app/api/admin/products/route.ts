@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
         : category === 'cafe' ? '☕'
         : category === 'fresh-fish' ? '🐟'
         : category === 'animals' ? '🐑'
+        : category === 'used-items' ? '♻️'
+        : category === 'home-food' ? '🍲'
         : kind === 'service' ? '🛠️' : '🛍️')
     const gradient = cleanStr(body.gradient, 160) || 'linear-gradient(135deg,#8B5CF6,#6D28D9)'
 
