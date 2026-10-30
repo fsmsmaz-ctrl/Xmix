@@ -6,6 +6,7 @@ import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
 import { CATEGORIES, AGRI_CATEGORY_KEYS, AGRI_FILTER_PRESET } from '@/lib/types'
+import { parseDetailsLine } from '@/lib/details'
 import { ProductCard } from './ProductCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +43,8 @@ export function ShopView({
       if (filters.minPrice && p.price < Number(filters.minPrice)) return false
       if (filters.maxPrice && p.price > Number(filters.maxPrice)) return false
       if (q) {
-        const hay = `${p.nameAr} ${p.nameEn} ${p.descAr} ${p.descEn} ${company?.nameAr ?? ''} ${company?.nameEn ?? ''} ${p.category}`.toLowerCase()
+        // نستبعد سطر التفاصيل [[XMIX-D]] من الفهرسة حتى لا يطابق البحث JSON مخفي
+        const hay = `${p.nameAr} ${p.nameEn} ${parseDetailsLine(p.descAr).text} ${parseDetailsLine(p.descEn).text} ${company?.nameAr ?? ''} ${company?.nameEn ?? ''} ${p.category}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
