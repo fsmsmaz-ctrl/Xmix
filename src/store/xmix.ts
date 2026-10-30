@@ -7,6 +7,7 @@ import type { CartItem, Lang, SessionUser } from '@/lib/types'
 export type View =
   | { name: 'home' }
   | { name: 'shop' }
+  | { name: 'nearby' }
   | { name: 'companies' }
   | { name: 'company'; slug: string }
   | { name: 'product'; id: string }
@@ -55,6 +56,18 @@ interface XmixState {
   setShopFilters: (f: Partial<ShopFilters>) => void
   resetShopFilters: () => void
 
+  /* موقع العميل لاستراتيجية «الأقرب إليك» — GPS أو ولاية مختارة يدوياً */
+  geo: GeoState | null
+  /** هل أجاب الزبون على نافذة الموقع مرة واحدة على الأقل (أو تخطاها)؟ */
+  geoVersion: number
+  geoPromptOpen: boolean
+  openGeoPrompt: () => void
+  closeGeoPrompt: () => void
+  setGeoLocation: (g: GeoState) => void
+  clearGeoLocation: () => void
+  /** تخطي نافذة الموقع — لا تُعاد إلا عند رفع GEO_VERSION */
+  skipGeoPrompt: () => void
+
   /* اهتمامات الزبون — تُجمع من نافذة الترحيب وتُستخدم لعرض «مختارات لك» */
   interests: string[]
   /** هل أجاب الزبون على نافذة الاهتمامات مرة واحدة على الأقل (أو تخطاها)؟ */
@@ -76,6 +89,20 @@ interface XmixState {
 export const DEFAULT_FILTERS: ShopFilters = {
   q: '', company: '', category: '', kind: '', minPrice: '', maxPrice: '', sort: 'featured',
 }
+
+/** موقع العميل — gps = من المتصفح (دقة عالية) | city = ولاية مختارة يدوياً */
+export interface GeoState {
+  mode: 'gps' | 'city'
+  lat: number
+  lng: number
+  /** مفتاح الولاية الأقرب (يُعرض اسماً في الواجهة) */
+  cityKey: string
+  labelAr: string
+  labelEn: string
+}
+
+/** ارفع الرقم عند تعديل نافذة الموقع لتظهر مجدداً للزبائن القدامى */
+export const GEO_VERSION = 1
 
 /** ارفع الرقم عند تعديل خيارات الاهتمامات لتظهر نافذة الترحيب مجدداً للزبائن القدامى */
 /* v2: أُضيف قسما اغراض مستعملة ♻️ والأكلات المنزلية 🍲 لخيارات الاهتمامات */
@@ -144,6 +171,20 @@ export const useXmix = create<XmixState>()(
       setShopFilters: (f) => set({ shopFilters: { ...get().shopFilters, ...f } }),
       resetShopFilters: () => set({ shopFilters: DEFAULT_FILTERS }),
 
+      geo: null,
+      geoVersion: 0,
+      geoPromptOpen: false,
+      openGeoPrompt: () => set({ geoPromptOpen: true }),
+      closeGeoPrompt: () => set({ geoPromptOpen: false }),
+      setGeoLocation: (g) =>
+        set({
+          geo: g,
+          geoVersion: GEO_VERSION,
+          geoPromptOpen: false,
+        }),
+      clearGeoLocation: () => set({ geo: null, geoPromptOpen: true }),
+      skipGeoPrompt: () => set({ geoVersion: GEO_VERSION, geoPromptOpen: false }),
+
       interests: [],
       interestsTouched: false,
       interestsVersion: 0,
@@ -183,6 +224,8 @@ export const useXmix = create<XmixState>()(
       partialize: (s) => ({
         lang: s.lang,
         cart: s.cart,
+        geo: s.geo,
+        geoVersion: s.geoVersion,
         interests: s.interests,
         interestsTouched: s.interestsTouched,
         interestsVersion: s.interestsVersion,
