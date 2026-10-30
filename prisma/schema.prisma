@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  nameAr      String
+  nameEn      String
+  taglineAr   String
+  taglineEn   String
+  descAr      String
+  descEn      String
+  category    String
+  emoji       String
+  color       String
+  gradient    String
+  locationAr  String
+  locationEn  String
+  rating      Float     @default(4.5)
+  isFeatured  Boolean   @default(false)
+  /// pending = بانتظار موافقة المسؤول | active = معتمدة وظاهرة | suspended = موقوفة
+  status      String    @default("active") // pending | active | suspended
+  joinedAt    DateTime  @default(now())
+  products    Product[]
+  owners      User[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  nameAr      String
+  nameEn      String
+  descAr      String
+  descEn      String
+  price       Float
+  oldPrice    Float?
+  emoji       String
+  gradient    String
+  category    String
+  /// product = منتج مادي | service = خدمة (المخزون = طاقة استيعابية للطلبات)
+  kind        String      @default("product") // product | service
+  stock       Int         @default(20)
+  rating      Float       @default(4.5)
+  reviews     Int         @default(0)
+  badgeAr     String?
+  badgeEn     String?
+  isBestSeller Boolean    @default(false)
+  image       String?     @db.Text
+  images      Json?
+  createdAt   DateTime    @default(now())
+  gallery     ProductImage[]
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mime      String   @default("image/jpeg")
+  data      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  /// customer = زبون | owner = تاجر (صاحب رف) | admin = مسؤول النظام
+  role         String   @default("customer") // customer | owner | admin
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName String
+  phone        String
+  city         String
+  address      String
+  notes        String?
+  paymentMethod String     @default("cod")
+  subtotal     Float
+  shipping     Float       @default(0)
+  total        Float
+  status       String      @default("pending")
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  nameAr    String
+  nameEn    String
+  emoji     String
+  price     Float
+  qty       Int
+  companyId String?
+  companyAr String?
+  companyEn String?
+}
+
+model JoinRequest {
+  id           String   @id @default(cuid())
+  companyName  String
+  category     String
+  city         String
+  contactName  String
+  email        String
+  phone        String
+  description  String
+  /// new = جديد | approved = تم الاعتماد (أُنشئ رف وحساب) | rejected = مرفوض
+  status       String   @default("new")
+  createdAt    DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
