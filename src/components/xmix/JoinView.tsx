@@ -65,7 +65,9 @@ export function JoinView() {
           {lang === 'ar' ? 'شكراً لاهتمامك — فريق الشراكات في Xmix يراجع طلبك الآن.' : 'Thank you for your interest — the Xmix partnerships team is reviewing your request.'}
         </p>
         <Button variant="secondary" className="mt-8 rounded-xl font-bold" onClick={() => setDone(false)}>
-          {t.nav.home[lang] === 'Home' ? 'Submit another' : 'إرسال طلب آخر'}
+          {/* BUG-FIX: كان يُستنتج من ترجمة زر الرئيسية (t.nav.home === 'Home')
+              — استنتاج هش ينكسر إذا تغير النص. فحص لغة مباشر أوضح وأأمن. */}
+          {lang === 'ar' ? 'إرسال طلب آخر' : 'Submit another'}
         </Button>
       </div>
     )
