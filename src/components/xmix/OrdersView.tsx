@@ -17,6 +17,19 @@ export function OrdersView() {
   const [orders, setOrders] = useState<OrderData[] | null>(null)
   const [error, setError] = useState(false)
 
+  // BUG-FIX (حالة الطلب): كانت الشارة مكتوبة نصاً ثابتاً «قيد المعالجة»
+  // لكل الطلبات — حتى بعد توصيلها أو إلغائها من لوحة المسؤول. الآن تُقرأ
+  // o.status الحقيقية وتُعرض بلون مطابق (تُعاد استخدام مفاتيح لوحة المسؤول).
+  const statusInfo = (st: string) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      pending: { label: t.sys.orderStatusPending[lang], cls: 'bg-amber-400/15 text-amber-300 border-amber-400/30' },
+      processing: { label: t.sys.orderStatusProcessing[lang], cls: 'bg-sky-500/15 text-sky-300 border-sky-400/30' },
+      delivered: { label: t.sys.orderStatusDelivered[lang], cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30' },
+      cancelled: { label: t.sys.orderStatusCancelled[lang], cls: 'bg-rose-500/15 text-rose-300 border-rose-400/30' },
+    }
+    return map[st] ?? map.pending
+  }
+
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -82,8 +95,8 @@ export function OrdersView() {
                     {t.orders.date[lang]}: {new Date(o.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-OM' : 'en-GB', { dateStyle: 'medium' })}
                   </p>
                 </div>
-                <Badge className="bg-amber-400/15 text-amber-300 border border-amber-400/30 rounded-full font-bold">
-                  {t.orders.statusPending[lang]}
+                <Badge className={`${statusInfo(o.status).cls} rounded-full font-bold`}>
+                  {statusInfo(o.status).label}
                 </Badge>
               </div>
               <div className="space-y-2 mb-4">
