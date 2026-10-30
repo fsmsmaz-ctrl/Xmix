@@ -6,6 +6,7 @@ export const t = {
   nav: {
     home: { ar: 'الرئيسية', en: 'Home' },
     shop: { ar: 'المتجر', en: 'Shop' },
+    nearby: { ar: 'الأقرب لي', en: 'Near Me' },
     companies: { ar: 'المحلات', en: 'Shops' },
     about: { ar: 'من نحن', en: 'About' },
     join: { ar: 'افتح محلك', en: 'Open Your Shop' },
@@ -597,5 +598,86 @@ export const t = {
     foodNote1: { ar: '🏠 طعام بيتي يُحضّر في منزل الطاهية بمعايير نظافة عالية', en: '🏠 Home-made food prepared at the cook’s home with high hygiene standards' },
     foodNote2: { ar: '❄️ يُوصّل محفوظاً بالتبريد ويُفضّل استهلاكه خلال يومين', en: '❄️ Delivered chilled — best consumed within two days' },
     foodNote3: { ar: '⚠️ عند وجود حساسية تواصل مع الطاهية قبل الطلب', en: '⚠️ If you have allergies, contact the cook before ordering' },
+  },
+
+  /* ─────────────── استراتيجية «الأقرب إليك» 📍 ─────────────── */
+  geo: {
+    // نافذة الموقع الأولى
+    promptTitle: { ar: '📍 أين أنت؟', en: '📍 Where are you?' },
+    promptDesc: {
+      ar: 'نحدد موقعك لنعرض لك المحلات والمنتجات الأقرب إليك — الأعلى جودة أولاً، ومع أولوية لمن يوفر التوصيل. تختار ولايتك يدوياً إن أردت، وموقعك يبقى في متصفحك فقط.',
+      en: 'We use your location to show the nearest shops and products — best quality first, prioritising those with delivery. Choose your wilaya manually if you prefer; your location stays in your browser only.',
+    },
+    useGps: { ar: '📍 استخدم موقعي', en: '📍 Use my location' },
+    chooseArea: { ar: '🗺️ اختر ولايتك', en: '🗺️ Choose your wilaya' },
+    later: { ar: 'لاحقاً', en: 'Later' },
+    selectArea: { ar: 'اختر ولايتك', en: 'Select your wilaya' },
+    gpsDetecting: { ar: '…جارٍ تحديد موقعك', en: 'Detecting your location…' },
+    gpsDenied: {
+      ar: 'تم رفض إذن الموقع — اختر ولايتك يدوياً بدلاً من ذلك',
+      en: 'Location permission denied — choose your wilaya manually instead',
+    },
+    gpsUnsupported: {
+      ar: 'متصفحك لا يدعم تحديد الموقع — اختر ولايتك يدوياً',
+      en: 'Your browser does not support geolocation — choose your wilaya manually',
+    },
+    // شريط وقسم العرض
+    nearbyTitle: { ar: 'المحلات القريبة منك', en: 'Shops near you' },
+    nearbyDesc: {
+      ar: 'مرتبة بذكاء: الأقرب أولاً، ثم الأعلى تقييماً، مع أولوية لمن يوفر التوصيل',
+      en: 'Smartly ranked: nearest first, then best rated, prioritising shops with delivery',
+    },
+    yourLocation: { ar: 'موقعك', en: 'Your location' },
+    changeLocation: { ar: 'تغيير الموقع', en: 'Change location' },
+    setNow: { ar: 'حدد موقعك الآن', en: 'Set your location' },
+    locationNotSet: {
+      ar: 'حدد موقعك لنعرض ما هو قريب منك — محلات عمانية كثيرة في انتظارك',
+      en: 'Set your location to see what’s near you — many Omani shops are waiting',
+    },
+    locationSetHint: { ar: 'موقعك يبقى في متصفحك فقط ولا يُرسل لأي جهة', en: 'Your location stays in your browser only — never sent anywhere' },
+    // شارات وتفاصيل
+    deliveryAvailable: { ar: '🚚 توصيل متاح', en: '🚚 Delivery available' },
+    noDelivery: { ar: 'استلام من المحل', en: 'Pickup only' },
+    deliveryFee: { ar: 'رسوم التوصيل', en: 'Delivery fee' },
+    deliveryEta: { ar: 'يوصّل خلال', en: 'Delivers in' },
+    minutes: { ar: 'دقيقة', en: 'min' },
+    freeDelivery: { ar: 'توصيل مجاني', en: 'Free delivery' },
+    openShelf: { ar: 'زور الرف', en: 'Visit shelf' },
+    area: { ar: 'الولاية', en: 'Wilaya' },
+    noArea: { ar: 'الولاية غير محددة', en: 'Area not set' },
+    viewAllNearby: { ar: 'كل ما هو قريب منك', en: 'Everything near you' },
+    // حالات فارغة
+    emptyTitle: { ar: 'لا نتائج قريبة بعد', en: 'No nearby results yet' },
+    emptyDesc: {
+      ar: 'المحلات القريبة تظهر تلقائياً بمجرد تحديد مواقعها — جرّب تصفح كل المحلات في هذه الأثناء',
+      en: 'Nearby shops appear automatically once their locations are set — browse all shops meanwhile',
+    },
+    browseAll: { ar: 'تصفح المحلات كلها', en: 'Browse all shops' },
+    errorLoad: { ar: 'تعذر جلب المحلات القريبة', en: 'Failed to load nearby shops' },
+    retry: { ar: 'إعادة المحاولة', en: 'Retry' },
+    // تبويب التاجر: موقع الرف والتوصيل
+    tabShelf: { ar: 'الموقع والتوصيل', en: 'Location & Delivery' },
+    shelfGeoTitle: { ar: '📍 موقع رفك وخدمة التوصيل', en: '📍 Your shelf location & delivery' },
+    shelfGeoDesc: {
+      ar: 'بضبط الموقع يدخل رفك في نتائج «الأقرب إليك» لكل زبون قريب منك — والأعلى جودة مع توصيل متاح يتصدر دائماً',
+      en: 'Setting your location puts your shelf in “Near Me” results for every nearby customer — top quality with delivery always leads',
+    },
+    areaHint: { ar: 'اختر ولاية رفك (تُستخدم كموقع افتراضي إن لم تلتقط GPS)', en: 'Pick your shelf’s wilaya (used as fallback if GPS is not captured)' },
+    gpsCapture: { ar: '📍 التقط موقعي الحالي', en: '📍 Capture my current location' },
+    gpsCaptured: { ar: 'تم التقاط الموقع بنجاح ✓', en: 'Location captured ✓' },
+    coordsShown: { ar: 'الإحداثيات المحفوظة', en: 'Saved coordinates' },
+    enableDelivery: { ar: 'أوفر خدمة التوصيل', en: 'I offer delivery' },
+    deliveryHint: { ar: 'التوصيل يرفع ترتيبك في «الأقرب إليك» ويجذب زبائن الولايات المحيطة', en: 'Delivery boosts your “Near Me” ranking and attracts customers from surrounding wilayas' },
+    feeLabel: { ar: 'رسوم التوصيل (ر.ع) — اتركه فارغاً لتجاهله', en: 'Delivery fee (OMR) — leave empty to hide' },
+    etaLabel: { ar: 'زمن التوصيل التقريبي', en: 'Estimated delivery time' },
+    etaUnset: { ar: 'غير محدد', en: 'Not set' },
+    saveGeo: { ar: 'حفظ إعدادات الموقع', en: 'Save location settings' },
+    geoSaved: { ar: '✅ حُفظت إعدادات الموقع — رفك دخل استراتيجية «الأقرب إليك»', en: '✅ Location saved — your shelf joined the “Near Me” strategy' },
+    resetGeo: { ar: 'مسح الموقع المحفوظ', en: 'Clear saved location' },
+    resetConfirm: { ar: 'تمسح موقع رفك من «الأقرب إليك»؟', en: 'Clear your shelf location from “Near Me”?' },
+    geoReset: { ar: 'تم مسح الموقع', en: 'Location cleared' },
+    // المسؤول: تحرير موقع أي رف
+    geoBtn: { ar: '📍 الموقع', en: '📍 Location' },
+    geoDialogTitle: { ar: 'موقع الرف والتوصيل', en: 'Shelf location & delivery' },
   },
 }
