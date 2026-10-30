@@ -103,6 +103,8 @@ export const useXmix = create<XmixState>()(
 
       cart: [],
       addToCart: (item, qty = 1) => {
+        // حماية إضافية: صنف مخزونه 0 (أو سالب) لا يُضاف إطلاقاً
+        if (item.stock <= 0) return
         const cart = get().cart
         const existing = cart.find((c) => c.productId === item.productId)
         if (existing) {
@@ -192,6 +194,46 @@ export const useXmix = create<XmixState>()(
 
 export const FREE_SHIPPING_THRESHOLD = 50
 export const SHIPPING_FEE = 2
+
+/**
+ * مزامنة السلة المحفوظة في المتصفح مع الواقع على الخادم (BUG-FIX: سلة قديمة):
+ * سعر تغيّر، أو مخزون نقص، أو صنف حُذف/صار محله غير منشور — تُصحّح السلة
+ * قبل الدفع حتى لا يُحاسَب الزبون مبلغاً مختلفاً عمّا يراه.
+ * تعيد true إذا عُدّل شيء (لتُظهر الواجهة تنبيهاً لطيفاً).
+ */
+export async function reconcileCart(): Promise<boolean> {
+  const cart = useXmix.getState().cart
+  if (cart.length === 0) return false
+  try {
+    const ids = cart.map((c) => c.productId).join(',')
+    const res = await fetch(`/api/products?ids=${encodeURIComponent(ids)}`, { cache: 'no-store' })
+    if (!res.ok) return false
+    const data = (await res.json()) as {
+      products?: Array<{ id: string; price: number; stock: number }>
+    }
+    const fresh = data.products ?? []
+    const map = new Map(fresh.map((p) => [p.id, p]))
+    let changed = false
+    const next: CartItem[] = []
+    for (const c of cart) {
+      const p = map.get(c.productId)
+      // الصنف حُذف أو محله لم يعد منشوراً أو نفد مخزونه → يُسقط من السلة
+      if (!p || p.stock <= 0) {
+        changed = true
+        continue
+      }
+      const price = p.price !== c.price ? p.price : c.price
+      const qty = Math.min(c.qty, p.stock)
+      if (price !== c.price || qty !== c.qty) changed = true
+      next.push({ ...c, price, qty })
+    }
+    if (changed) useXmix.setState({ cart: next })
+    return changed
+  } catch {
+    // فشل الشبكة: نترك السلة كما هي — الخادم يبقى مصدر الحقيقة عند الطلب
+    return false
+  }
+}
 
 export function cartTotals(cart: CartItem[]) {
   const subtotal = cart.reduce((sum, c) => sum + c.price * c.qty, 0)
