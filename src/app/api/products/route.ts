@@ -16,9 +16,13 @@ export async function GET(req: NextRequest) {
       ? idsRaw.split(',').map((s) => s.trim()).filter((s) => /^[a-z0-9]+$/i.test(s)).slice(0, 50)
       : null
     // Cap `take` so a caller can't request the entire table in one query —
-    // also applied as the default when the param is absent (was unbounded before).
+    // also applied as the default when the param is absent.
+    // BUG-FIX (المنتجات الأحدث مختفية): كان السقف 200 مع ترتيب تصاعدي —
+    // عند تجاوز 200 منتج توقف الأحدث عن الظهور في الواجهة كلياً (الواجهة
+    // تجلب بلا take فتأخذ أول 200 قديم). رُفع السقف إلى 1000 وصار
+    // الترتيب تنازلياً لضمان ظهور الأحدث أولاً دائماً.
     const takeRaw = Number(sp.get('take'))
-    const take = Number.isFinite(takeRaw) && takeRaw > 0 ? Math.min(200, Math.floor(takeRaw)) : 200
+    const take = Number.isFinite(takeRaw) && takeRaw > 0 ? Math.min(1000, Math.floor(takeRaw)) : 1000
 
     const searchCondition = search
       ? {
@@ -41,7 +45,7 @@ export async function GET(req: NextRequest) {
         company: { status: 'active' },
         ...searchCondition,
       },
-      orderBy: [{ createdAt: 'asc' }],
+      orderBy: [{ createdAt: 'desc' }],
       take,
     })
 
