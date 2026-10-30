@@ -101,10 +101,16 @@ export default function XmixPage() {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
     document.documentElement.lang = lang
 
+    // BUG-FIX (بوابة السلة): نعلّم انتهاء فحص الجلسة في الحالتين —
+    // بعدها فقط يُسمح للبوابة بفتح نافذة التسجيل للضيوف، فلا تظهر
+    // النافذة خطأً لمستخدم مسجل خلال ومضة جلب /api/auth/me
     fetch('/api/auth/me')
       .then((r) => r.json())
-      .then((d) => d.user && setUser(d.user))
-      .catch(() => {})
+      .then((d) => {
+        if (d.user) setUser(d.user)
+        useXmix.getState().setSessionChecked(true)
+      })
+      .catch(() => useXmix.getState().setSessionChecked(true))
 
     void loadData(false)
   }, [loadData])
