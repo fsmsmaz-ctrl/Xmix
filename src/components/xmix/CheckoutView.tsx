@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Banknote, Landmark, Lock, CheckCircle2 } from 'lucide-react'
-import { useXmix, cartTotals, fmtPrice } from '@/store/xmix'
+import { useXmix, cartTotals, fmtPrice, reconcileCart } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { motion } from 'framer-motion'
 import { toast } from '@/hooks/use-toast'
-
 const OMAN_CITIES_AR = ['مسقط', 'صلالة', 'نزوى', 'صحار', 'صور', 'الدقم', 'بركاء', 'الرستاق', 'إبراء', 'بهلاء']
 const OMAN_CITIES_EN = ['Muscat', 'Salalah', 'Nizwa', 'Sohar', 'Sur', 'Duqm', 'Barka', 'Rustaq', 'Ibra', 'Bahla']
 
@@ -35,6 +34,18 @@ export function CheckoutView() {
   const { subtotal, shipping, total } = cartTotals(cart)
   const hasServices = cart.some((c) => c.kind === 'service')
   const cities = lang === 'ar' ? OMAN_CITIES_AR : OMAN_CITIES_EN
+
+  // BUG-FIX (سلة قديمة): مزامنة الأسعار/الكميات/توفر الأصناف مع الخادم قبل الدفع
+  // حتى لا يُحاسَب الزبون مبلغاً مختلفاً عمّا يراه في الملخص
+  useEffect(() => {
+    let alive = true
+    void reconcileCart().then((changed) => {
+      if (alive && changed)
+        toast({ title: t.cart.synced[lang] })
+    })
+    return () => {
+      alive = false
+    }  }, [])
 
   if (cart.length === 0) {
     return (
@@ -84,9 +95,12 @@ export function CheckoutView() {
       if (!res.ok) throw new Error(data.error || 'error')
       clearCart()
       navigate({ name: 'success', orderNumber: data.order.orderNumber })
-    } catch {
+    } catch (err) {
+      // BUG-FIX: نعرض رسالة الخادم الحقيقية (مثال: الكمية المتوفرة، تغيّر المخزون)
+      // بدل رسالة عمومية تخفي السبب عن الزبون — رسائل الخادم بلغتين أصلاً
+      const serverMsg = err instanceof Error && err.message && err.message !== 'error' ? err.message : null
       toast({
-        title: lang === 'ar' ? 'تعذر إتمام الطلب، حاول مجدداً' : 'Could not place the order, try again',
+        title: serverMsg ?? (lang === 'ar' ? 'تعذر إتمام الطلب، حاول مجدداً' : 'Could not place the order, try again'),
         variant: 'destructive',
       })
     } finally {
@@ -269,14 +283,17 @@ export function SuccessView({ orderNumber }: { orderNumber: string }) {
         <span className="font-black text-lg tracking-wider" dir="ltr">{orderNumber}</span>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button
-          size="lg"
-          variant="secondary"
-          onClick={() => (user ? navigate({ name: 'orders' }) : navigate({ name: 'home' }))}
-          className="rounded-xl font-bold"
-        >
-          {user ? t.success.orders[lang] : t.success.home[lang]}
-        </Button>
+        {/* BUG-FIX: كان يُرسمان زران متطابقان للرئيسية للزوار غير المسجلين */}
+        {user && (
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={() => navigate({ name: 'orders' })}
+            className="rounded-xl font-bold"
+          >
+            {t.success.orders[lang]}
+          </Button>
+        )}
         <Button size="lg" onClick={() => navigate({ name: 'home' })} className="rounded-xl font-bold shadow-lg shadow-violet-900/30">
           {t.success.home[lang]}
         </Button>
