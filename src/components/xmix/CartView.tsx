@@ -14,6 +14,8 @@ export function CartView() {
   const removeFromCart = useXmix((s) => s.removeFromCart)
   const clearCart = useXmix((s) => s.clearCart)
   const navigate = useXmix((s) => s.navigate)
+  const user = useXmix((s) => s.user)
+  const openAuth = useXmix((s) => s.openAuth)
 
   const { subtotal, shipping, total } = cartTotals(cart)
   // «أضف للتوصيل المجاني» يُحسب على قيمة البضائع فقط (الخدمات لا تُشحن)
@@ -145,7 +147,16 @@ export function CartView() {
           <Button
             size="lg"
             className="w-full rounded-xl font-bold shadow-lg shadow-violet-900/30"
-            onClick={() => navigate({ name: 'checkout' })}
+            onClick={() => {
+              // BUG-FIX (الطلب بلا حساب): الضيف يرى سلته ويديرها بحرية،
+              // لكن الإتمام يتطلب حساباً — تُفتح نافذة التسجيل وتبقى سلته كما هي
+              if (!user) {
+                openAuth('register', 'cart')
+                toast({ title: t.cart.loginToCheckout[lang] })
+                return
+              }
+              navigate({ name: 'checkout' })
+            }}
           >
             {t.cart.checkout[lang]}
           </Button>
