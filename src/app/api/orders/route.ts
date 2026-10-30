@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
+import { rateLimit, clientIp } from '@/lib/rate-limit'
 
 type IncomingItem = {
   productId?: string
@@ -12,6 +13,16 @@ class OrderConflictError extends Error {}
 
 export async function POST(req: NextRequest) {
   try {
+    // BUG-FIX (إساءة الطلبات): إنشاء الطلبات كان المفتوح الوحيد بلا حماية —
+    // سبام الطلبات يُنقص المخزون الحقيقي ويعمي لوحة التاجر. 10 طلبات / 10 دقائق لكل IP.
+    const ip = clientIp(req)
+    const limited = rateLimit(`order:${ip}`, 10, 10 * 60 * 1000)
+    if (limited)
+      return NextResponse.json(
+        { error: `طلبات كثيرة، أعد المحاولة بعد ${limited.retryAfter} ثانية | Too many orders, retry in ${limited.retryAfter}s` },
+        { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } }
+      )
+
     const body = await req.json()
     const customerName = String(body.customerName || '').trim()
     const phone = String(body.phone || '').trim()
@@ -27,6 +38,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'بيانات التوصيل ناقصة | Missing delivery info' }, { status: 400 })
     if (customerName.length > 80 || phone.length > 30 || city.length > 60 || address.length > 300 || (notes && notes.length > 500))
       return NextResponse.json({ error: 'إحدى البيانات طويلة جداً | A field is too long' }, { status: 400 })
+    // BUG-FIX (اتساق التحقق): الواجهة تتحقق من صيغة الهاتف والخادم لم يكن —
+    // نفس نمط الواجهة: أرقام و+ وفراغات وشرطات، 8 خانات على الأقل.
+    if (!/^[+0-9\s-]{8,}$/.test(phone))
+      return NextResponse.json({ error: 'رقم الهاتف غير صالح | Invalid phone number' }, { status: 400 })
     if (items.length === 0)
       return NextResponse.json({ error: 'السلة فارغة | Cart is empty' }, { status: 400 })
     if (items.length > 50)
