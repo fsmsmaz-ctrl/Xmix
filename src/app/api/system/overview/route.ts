@@ -11,7 +11,7 @@ export async function GET() {
     const [
       usersTotal, customersCount, ownersCount,
       companiesActive, companiesPending, companiesSuspended,
-      productsCount, ordersCount, ordersPending, ordersAgg,
+      productsCount, ordersCount, ordersPending,
       joinRequestsNew, messagesNew,
     ] = await Promise.all([
       db.user.count(),
@@ -23,10 +23,16 @@ export async function GET() {
       db.product.count(),
       db.order.count(),
       db.order.count({ where: { status: 'pending' } }),
-      db.order.aggregate({ _sum: { total: true } }),
       db.joinRequest.count({ where: { status: 'new' } }),
       db.contactMessage.count(),
     ])
+
+    // BUG-FIX (إيرادات نظيفة): الطلبات الملغاة لم تُقبض قيمتها —
+    // كانت تُحتسب ضمن إجمالي الإيرادات وتضخّم الرقم.
+    const revenueAgg = await db.order.aggregate({
+      _sum: { total: true },
+      where: { status: { not: 'cancelled' } },
+    })
 
     return NextResponse.json({
       overview: {
@@ -39,7 +45,7 @@ export async function GET() {
         productsCount,
         ordersCount,
         ordersPending,
-        revenue: Math.round((ordersAgg._sum.total ?? 0) * 1000) / 1000,
+        revenue: Math.round((revenueAgg._sum.total ?? 0) * 1000) / 1000,
         joinRequestsNew,
         messagesNew,
       },
