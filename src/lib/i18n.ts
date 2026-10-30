@@ -134,6 +134,10 @@ export const t = {
       ar: '🛠️ الخدمات والحجوزات في سلتك لا تُحسب عليها رسوم توصيل.',
       en: '🛠️ Services and bookings in your cart are not charged delivery.',
     },
+    synced: {
+      ar: '🔄 حدّثنا سلتك: بعض الأسعار أو الكميات تغيّرت حسب المتوفر الآن.',
+      en: '🔄 Cart refreshed: some prices or quantities changed to current availability.',
+    },
   },
   checkout: {
     title: { ar: 'إتمام الطلب', en: 'Checkout' },
