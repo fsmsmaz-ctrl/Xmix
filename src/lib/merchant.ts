@@ -73,12 +73,17 @@ export async function grantMerchant(
     user = await db.user.findUnique({ where: { id: opts.userId } })
     if (!user) throw new Error('USER_NOT_FOUND')
     if (user.role === 'admin') throw new Error('CANNOT_PROMOTE_ADMIN')
+    // BUG-FIX (رف يتيم): التاجر القائم له رف بالفعل — منحه رفاً ثانياً كان
+    // يُعيد كتابة companyId ويترك رفه القديم نشطاً على الواجهة بلا مالك أبداً.
+    if (user.role === 'owner' && user.companyId) throw new Error('ALREADY_MERCHANT')
   } else {
     const email = opts.email?.trim().toLowerCase()
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('EMAIL_REQUIRED')
     const existing = await db.user.findUnique({ where: { email } })
     if (existing) {
       if (existing.role === 'admin') throw new Error('CANNOT_PROMOTE_ADMIN')
+      // نفس الحماية في مسار البريد (اعتماد طلبات الانضمام لحساب تاجر قائم)
+      if (existing.role === 'owner' && existing.companyId) throw new Error('ALREADY_MERCHANT')
       user = existing
     } else {
       tempPassword = generateTempPassword()
