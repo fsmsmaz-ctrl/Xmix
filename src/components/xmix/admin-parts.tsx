@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Store, Inbox, BadgeCheck, Ban, CheckCircle2, XCircle, ShoppingCart,
-  Copy, RefreshCw, Eye,
+  Copy, RefreshCw, Eye, MapPin, Navigation, Save,
 } from 'lucide-react'
 import { useXmix, fmtPrice } from '@/store/xmix'
 import { t } from '@/lib/i18n'
@@ -11,6 +11,7 @@ import type {
   Lang, SystemCompany, SystemJoinRequest, SystemOrder, SystemUser,
 } from '@/lib/types'
 import { CATEGORIES, categoryLabel } from '@/lib/types'
+import { AREAS, GOVERNORATES, findNearestArea, validCoords } from '@/lib/geo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -143,6 +144,7 @@ export function CompaniesTab({ lang, onChanged }: { lang: Lang; onChanged: () =>
   const s = t.sys
   const [companies, setCompanies] = useState<SystemCompany[]>([])
   const [loading, setLoading] = useState(true)
+  const [geoFor, setGeoFor] = useState<SystemCompany | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -244,12 +246,182 @@ export function CompaniesTab({ lang, onChanged }: { lang: Lang; onChanged: () =>
                     <Ban size={13} /> {s.suspend[lang]}
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-lg gap-1.5"
+                  onClick={() => setGeoFor(c)}
+                >
+                  <MapPin size={13} /> {t.geo.geoBtn[lang]}
+                </Button>
               </div>
             </div>
           )
         })
       )}
+      {geoFor && (
+        <CompanyGeoDialog
+          lang={lang}
+          company={geoFor}
+          onClose={() => setGeoFor(null)}
+          onSaved={() => {
+            setGeoFor(null)
+            void load()
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+/* ================= Company geo dialog (استراتيجية «الأقرب إليك») ================= */
+const ADMIN_ETA_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240]
+
+export function CompanyGeoDialog({
+  lang, company, onClose, onSaved,
+}: {
+  lang: Lang
+  company: SystemCompany
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const g = t.geo
+  const [cityKey, setCityKey] = useState(company.cityKey ?? '')
+  const [lat, setLat] = useState<number | null>(company.lat ?? null)
+  const [lng, setLng] = useState<number | null>(company.lng ?? null)
+  const [hasDelivery, setHasDelivery] = useState(!!company.hasDelivery)
+  const [fee, setFee] = useState(company.deliveryFee != null ? String(company.deliveryFee) : '')
+  const [eta, setEta] = useState(company.deliveryEta != null ? String(company.deliveryEta) : '')
+  const [saving, setSaving] = useState(false)
+
+  const captureGps = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      toast({ title: g.gpsUnsupported[lang] })
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        if (!validCoords(latitude, longitude)) {
+          toast({ title: 'إحداثيات غير صالحة | Invalid coordinates' })
+          return
+        }
+        setLat(latitude)
+        setLng(longitude)
+        if (!cityKey) setCityKey(findNearestArea(latitude, longitude)?.area.key ?? '')
+      },
+      () => toast({ title: g.gpsDenied[lang] }),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    )
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/system/companies/${company.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cityKey: cityKey || null,
+          lat: lat != null && lng != null ? lat : null,
+          lng: lat != null && lng != null ? lng : null,
+          hasDelivery,
+          deliveryFee: fee.trim() === '' ? null : fee,
+          deliveryEta: eta.trim() === '' ? null : eta,
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => null)
+        throw new Error(j?.error || 'failed')
+      }
+      toast({ title: g.geoSaved[lang] })
+      onSaved()
+    } catch (e) {
+      toast({
+        title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base font-black">
+            📍 {g.geoDialogTitle[lang]} — {lang === 'ar' ? company.nameAr : company.nameEn}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs font-bold">{g.area[lang]}</Label>
+            <select
+              value={cityKey}
+              onChange={(e) => setCityKey(e.target.value)}
+              aria-label={g.selectArea[lang]}
+              className="w-full mt-1.5 rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">— {g.selectArea[lang]} —</option>
+              {GOVERNORATES.map((gov) => (
+                <optgroup key={gov.key} label={lang === 'ar' ? gov.ar : gov.en}>
+                  {AREAS.filter((a) => a.gov === gov.key).map((a) => (
+                    <option key={a.key} value={a.key}>
+                      {lang === 'ar' ? a.ar : a.en}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={captureGps} className="rounded-xl gap-1.5 font-bold">
+              <Navigation size={14} /> {g.gpsCapture[lang]}
+            </Button>
+            {lat != null && lng != null && (
+              <span className="text-xs font-bold text-emerald-400" dir="ltr">
+                📍 {lat.toFixed(4)}, {lng.toFixed(4)}
+              </span>
+            )}
+          </div>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hasDelivery}
+              onChange={(e) => setHasDelivery(e.target.checked)}
+              className="h-[18px] w-[18px] accent-violet-600"
+            />
+            <span className="text-sm font-bold">🚚 {g.enableDelivery[lang]}</span>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-bold">{g.deliveryFee[lang]}</Label>
+              <Input
+                type="number" min={0} max={100} step="0.1"
+                value={fee} onChange={(e) => setFee(e.target.value)}
+                placeholder="1.5" className="mt-1.5 rounded-xl bg-secondary/60" dir="ltr"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{g.etaLabel[lang]}</Label>
+              <select
+                value={eta} onChange={(e) => setEta(e.target.value)}
+                className="w-full mt-1.5 rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">{g.etaUnset[lang]}</option>
+                {ADMIN_ETA_OPTIONS.map((m) => (
+                  <option key={m} value={m}>{m} {g.minutes[lang]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <Button onClick={save} disabled={saving} className="w-full rounded-xl gap-2 font-bold shadow-lg shadow-violet-900/30">
+            <Save size={15} /> {saving ? t.misc.loading[lang] : g.saveGeo[lang]}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
