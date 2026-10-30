@@ -23,6 +23,17 @@ export async function POST(req: NextRequest) {
         { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } }
       )
 
+    // BUG-FIX (الطلب بلا حساب): كان الزائر بلا حساب يستطيع إنشاء طلب كامل
+    // (يُحفظ userId=null) — لا يستطيع صاحبه تتبعه من «طلباتي» ولا تُربط
+    // إحصائياته به. الآن الحساب إلزامي خادمياً (موازياً لبوابة الواجهة
+    // عند الإضافة للسلة) — الحماية الحقيقية تكون على الخادم دائماً.
+    const user = await getSessionUser()
+    if (!user)
+      return NextResponse.json(
+        { error: 'يجب إنشاء حساب وتسجيل الدخول لإتمام الطلب | An account is required to place an order' },
+        { status: 401 }
+      )
+
     const body = await req.json()
     const customerName = String(body.customerName || '').trim()
     const phone = String(body.phone || '').trim()
@@ -112,8 +123,6 @@ export async function POST(req: NextRequest) {
     // Random suffix avoids unique-constraint collisions under concurrency
     const orderNumber = `XM-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 4).toUpperCase()}`
 
-    const user = await getSessionUser()
-
     // Create order + decrement stock atomically.
     // The conditional updateMany (stock >= qty) makes the decrement race-safe:
     // if two concurrent orders drain the same stock, the second one fails here
@@ -131,7 +140,7 @@ export async function POST(req: NextRequest) {
       return tx.order.create({
         data: {
           orderNumber,
-          userId: user?.id ?? null,
+          userId: user.id,
           customerName, phone, city, address, notes,
           paymentMethod,
           subtotal: Math.round(subtotal * 1000) / 1000,
