@@ -12,6 +12,7 @@ import { HomeView } from '@/components/xmix/HomeView'
 import { ShopView } from '@/components/xmix/ShopView'
 import { CompaniesView } from '@/components/xmix/CompaniesView'
 import { CompanyView } from '@/components/xmix/CompanyView'
+import { NearbyView } from '@/components/xmix/NearbyView'
 import { ProductView } from '@/components/xmix/ProductView'
 import { CartView } from '@/components/xmix/CartView'
 import { CheckoutView, SuccessView } from '@/components/xmix/CheckoutView'
@@ -23,6 +24,7 @@ import { ContactView } from '@/components/xmix/ContactView'
 import { JoinView } from '@/components/xmix/JoinView'
 import { AuthModal } from '@/components/xmix/AuthModal'
 import { OnboardingModal } from '@/components/xmix/OnboardingModal'
+import { GeoPrompt } from '@/components/xmix/GeoPrompt'
 import { SkeletonStore, ErrorBlock } from '@/components/xmix/shared'
 
 /** Floating back-to-top button — appears after scrolling down. */
@@ -146,6 +148,8 @@ export default function XmixPage() {
               <HomeView companies={companies} products={products} />
             ) : view.name === 'shop' ? (
               <ShopView companies={companies} products={products} />
+            ) : view.name === 'nearby' ? (
+              <NearbyView />
             ) : view.name === 'companies' ? (
               <CompaniesView companies={companies} />
             ) : view.name === 'company' ? (
@@ -182,6 +186,7 @@ export default function XmixPage() {
       <Footer companies={companies} />
       <AuthModal />
       <OnboardingModal />
+      <GeoPrompt />
       <BackToTop />
     </div>
   )
