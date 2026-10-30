@@ -2,10 +2,14 @@
 
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Minus, Plus, ShoppingCart, Zap, Truck, RotateCcw, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Minus, Plus, ShoppingCart, Zap, Truck, RotateCcw, ShieldCheck, ArrowRight, ArrowLeft, Eye, Home, Snowflake, AlertTriangle } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
+import {
+  parseDetailsLine, cutoffLabel, conditionLabel, conditionDescLabel,
+  usedSubLabel, ageLabel, allergensLabel, mealLabel, prepLabel, daysLabel,
+} from '@/lib/details'
 import { ProductCard } from './ProductCard'
 import { ProductGallery } from './ProductGallery'
 import { StarRating, PriceTag } from './shared'
@@ -42,10 +46,15 @@ export function ProductView({
   }
 
   const name = lang === 'ar' ? product.nameAr : product.nameEn
-  const desc = lang === 'ar' ? product.descAr : product.descEn
+  // سطر تفاصيل القسم ([[XMIX-D]]) يُستخرج ولا يظهر نصاً خاماً للزبون
+  const descParsed = parseDetailsLine(lang === 'ar' ? product.descAr : product.descEn)
+  const desc = descParsed.text || name
+  const xd = descParsed.details
   const badge = lang === 'ar' ? product.badgeAr : product.badgeEn
   const isService = (product.kind ?? 'product') === 'service'
   const isLabor = product.category === 'agri-labor'
+  const isUsed = product.category === 'used-items'
+  const isFood = product.category === 'home-food'
 
   const related = products
     .filter((p) => p.id !== product.id && (p.category === product.category || p.companyId === product.companyId))
@@ -137,6 +146,11 @@ export function ProductView({
           {isService && !isLabor && (
             <p className="text-xs font-semibold text-muted-foreground -mt-1">📅 {t.product.serviceUnit[lang]}</p>
           )}
+          {isFood && xd?.cutoff && (
+            <p className="text-xs font-bold text-orange-400 -mt-1">
+              ⏰ {cutoffLabel(xd.cutoff, lang)} — {lang === 'ar' ? 'الطلب بعده يُجهّز في اليوم التالي' : 'Orders after it are prepared the next day'}
+            </p>
+          )}
 
           {/* stock / availability */}
           <div>
@@ -176,19 +190,81 @@ export function ProductView({
             </div>
           )}
 
-          {/* perks */}
+          {/* perks — مصممة لكل قسم: المستعمل بلا إرجاع، والأكلات المنزلية بتجهيز بيتي */}
           <div className="grid sm:grid-cols-3 gap-3">
-            {[
-              { icon: Truck, text: t.product.freeShip[lang] },
-              { icon: RotateCcw, text: t.product.returns[lang] },
-              { icon: ShieldCheck, text: t.product.warranty[lang] },
-            ].map((perk) => (
+            {(isUsed
+              ? [
+                  { icon: Eye, text: t.xd.usedNote1[lang] },
+                  { icon: RotateCcw, text: t.xd.usedNote2[lang] },
+                  { icon: Truck, text: t.xd.usedNote3[lang] },
+                ]
+              : isFood
+                ? [
+                    { icon: Home, text: t.xd.foodNote1[lang] },
+                    { icon: Snowflake, text: t.xd.foodNote2[lang] },
+                    { icon: AlertTriangle, text: t.xd.foodNote3[lang] },
+                  ]
+                : [
+                    { icon: Truck, text: t.product.freeShip[lang] },
+                    { icon: RotateCcw, text: t.product.returns[lang] },
+                    { icon: ShieldCheck, text: t.product.warranty[lang] },
+                  ]
+            ).map((perk) => (
               <div key={perk.text} className="flex items-start gap-2.5 rounded-xl border bg-card p-3">
-                <perk.icon size={16} className="text-primary shrink-0 mt-0.5" />
+                <perk.icon size={16} className={`shrink-0 mt-0.5 ${isUsed ? 'text-amber-400' : isFood ? 'text-orange-400' : 'text-primary'}`} />
                 <span className="text-[11px] leading-relaxed text-muted-foreground">{perk.text}</span>
               </div>
             ))}
           </div>
+
+          {/* ══ لوحة تفاصيل «اغراض مستعملة» ══ */}
+          {isUsed && xd && (
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 space-y-3">
+              <h3 className="font-bold text-sm">{t.xd.panelUsed[lang]}</h3>
+              <div className="flex flex-wrap gap-2">
+                {[usedSubLabel(xd.sub, lang), conditionLabel(xd.cond, lang),
+                  xd.ageM !== undefined ? `${lang === 'ar' ? '⏳ عمر الاستخدام' : '⏳ Age'}: ${ageLabel(xd.ageM, lang)}` : null,
+                  xd.warrantyM ? `${lang === 'ar' ? '🛡️ ضمان متبقٍ' : '🛡️ Warranty left'}: ${ageLabel(xd.warrantyM, lang)}` : null,
+                  xd.nego ? t.xd.negoChip[lang] : null,
+                ].filter(Boolean).map((chip) => (
+                  <span key={chip as string} className="rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 px-3 py-1 text-[11px] font-bold">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              {conditionDescLabel(xd.cond, lang) && (
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{conditionDescLabel(xd.cond, lang)}</p>
+              )}
+            </div>
+          )}
+
+          {/* ══ لوحة تفاصيل «أكلات منزلية» ══ */}
+          {isFood && xd && (
+            <div className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4 sm:p-5 space-y-3">
+              <h3 className="font-bold text-sm">{t.xd.panelFood[lang]}</h3>
+              <div className="flex flex-wrap gap-2">
+                {[mealLabel(xd.meal, lang),
+                  xd.portions ? `${lang === 'ar' ? `🍚 يكفي ${xd.portions} أشخاص` : `🍚 Serves ${xd.portions}`}` : null,
+                  cutoffLabel(xd.cutoff, lang) ? `⏰ ${cutoffLabel(xd.cutoff, lang)}` : null,
+                  daysLabel(xd.days, lang) ? `${lang === 'ar' ? '📅' : '📅'} ${daysLabel(xd.days, lang)}` : null,
+                  prepLabel(xd.prep, lang) ? `🏠 ${prepLabel(xd.prep, lang)}` : null,
+                ].filter(Boolean).map((chip) => (
+                  <span key={chip as string} className="rounded-full bg-orange-500/10 border border-orange-500/25 text-orange-300 px-3 py-1 text-[11px] font-bold">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              {allergensLabel(xd.allergens, lang) ? (
+                <p className="text-[11px] font-bold text-rose-400 leading-relaxed">
+                  ⚠️ {lang === 'ar' ? 'يحتوي:' : 'Contains:'} {allergensLabel(xd.allergens, lang)}
+                </p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {lang === 'ar' ? 'لم تُحدّد مواد الحساسية لهذا الطبق — استفسر من الطاهية عند الشك.' : 'No allergen info listed for this dish — ask the cook if unsure.'}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* description */}
           <div className="rounded-2xl border bg-card p-5">
