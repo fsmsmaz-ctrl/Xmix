@@ -20,7 +20,51 @@ export interface Company {
   /** pending = بانتظار اعتماد المسؤول | active = معتمدة | suspended = موقوفة */
   status: 'pending' | 'active' | 'suspended'
   joinedAt: string
+  /* استراتيجية «الأقرب إليك» — اختيارية للتوافق مع الاستجابات القديمة */
+  cityKey?: string | null
+  lat?: number | null
+  lng?: number | null
+  hasDelivery?: boolean
+  deliveryFee?: number | null
+  deliveryEta?: number | null
   _count?: { products: number }
+}
+
+/** محل في نتائج «الأقرب إليك» (استجابة /api/nearby) */
+export interface NearbyStore {
+  id: string
+  slug: string
+  nameAr: string
+  nameEn: string
+  taglineAr: string
+  taglineEn: string
+  category: string
+  emoji: string
+  gradient: string
+  rating: number
+  isFeatured: boolean
+  locationAr: string
+  locationEn: string
+  cityKey: string | null
+  areaAr: string
+  areaEn: string
+  hasDelivery: boolean
+  deliveryFee: number | null
+  deliveryEta: number | null
+  distanceKm: number | null
+  distanceLabel: string
+  distanceLabelEn: string
+  score: number
+  hasCoords: boolean
+  products: Product[]
+}
+
+export interface NearbyOrigin {
+  lat: number
+  lng: number
+  mode: 'gps' | 'city'
+  areaAr: string
+  areaEn: string
 }
 
 export interface Product {
@@ -119,6 +163,13 @@ export interface SystemCompany {
   joinedAt: string
   productsCount: number
   owners: { id: string; name: string; email: string }[]
+  /* استراتيجية «الأقرب إليك» — تُعاد من /api/system/companies */
+  cityKey?: string | null
+  lat?: number | null
+  lng?: number | null
+  hasDelivery?: boolean
+  deliveryFee?: number | null
+  deliveryEta?: number | null
 }
 
 export interface SystemJoinRequest {
