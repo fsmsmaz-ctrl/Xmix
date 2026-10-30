@@ -139,6 +139,15 @@ export const t = {
       ar: '🔄 حدّثنا سلتك: بعض الأسعار أو الكميات تغيّرت حسب المتوفر الآن.',
       en: '🔄 Cart refreshed: some prices or quantities changed to current availability.',
     },
+    // BUG-FIX (الطلب بلا حساب): رسائل بوابة الحساب الإلزامي
+    loginToAdd: {
+      ar: 'أنشئ حساباً أولاً لإضافة المنتجات إلى سلتك 🛒',
+      en: 'Create an account first to add items to your cart 🛒',
+    },
+    loginToCheckout: {
+      ar: 'الحساب مطلوب لإتمام الطلب — أنشئ حساباً أو سجّل دخولك',
+      en: 'An account is required to check out — sign up or log in',
+    },
   },
   checkout: {
     title: { ar: 'إتمام الطلب', en: 'Checkout' },
@@ -155,7 +164,6 @@ export const t = {
     bankDesc: { ar: 'حوّل إلى حساب Xmix وأرفق رقم الطلب', en: 'Transfer to the Xmix account and quote your order number' },
     place: { ar: 'تأكيد الطلب', en: 'Place Order' },
     summary: { ar: 'ملخص الطلب', en: 'Order Summary' },
-    loginHint: { ar: 'سجّل الدخول لربط الطلب بحسابك وتتبّعه من "طلباتي"', en: 'Log in to link this order to your account and track it from "My Orders"' },
   },
   success: {
     title: { ar: 'تم استلام طلبك بنجاح!', en: 'Your order was placed successfully!' },
@@ -178,6 +186,17 @@ export const t = {
     loggedIn: { ar: 'تم تسجيل الدخول بنجاح', en: 'Logged in successfully' },
     loggedOut: { ar: 'تم تسجيل الخروج', en: 'Logged out' },
     registered: { ar: 'تم إنشاء حسابك بنجاح', en: 'Account created successfully' },
+    // BUG-FIX (الطلب بلا حساب): رسالة داخل نافذة الدخول تشرح سبب فتحها
+    reasonCart: {
+      ar: '🛒 أنشئ حساباً أو سجّل دخولك لإضافة المنتجات إلى سلتك وإتمام طلبك — سلتك محفوظة ولن تفقد شيئاً.',
+      en: '🛒 Create an account or log in to add items to your cart and place your order — your cart is saved, you will not lose anything.',
+    },
+    // بوابة صفحة الدفع للضيوف
+    accountRequired: { ar: 'الحساب مطلوب لإتمام الطلب', en: 'An account is required to check out' },
+    accountRequiredDesc: {
+      ar: 'حماية لطلبك وتتبّعه: سجّل الدخول أو أنشئ حساباً جديداً في ثوانٍ، وستجد سلتك كما هي.',
+      en: 'To protect and track your order: log in or create a new account in seconds — your cart will be waiting for you.',
+    },
   },
   orders: {
     title: { ar: 'طلباتي', en: 'My Orders' },
