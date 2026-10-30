@@ -78,6 +78,11 @@ export default function XmixPage() {
         fetch('/api/companies', { cache: 'no-store' }),
         fetch('/api/products', { cache: 'no-store' }),
       ])
+      // BUG-FIX (متجر فارغ صامت): استجابة خطأ 500 من الخادم كانت تُستقبل
+      // كـ JSON بلا بيانات ثم تُمسح القوائم بها — يرى الزبون سوقاً فارغاً
+      // بدل رسالة خطأ. الآن أي استجابة غير ناجحة تُعامل كفشل: تُحفظ
+      // البيانات القديمة (إن وجدت) ويظهر حظر الخطأ عند أول تحميل فقط.
+      if (!cRes.ok || !pRes.ok) throw new Error('bad-response')
       const [cData, pData] = await Promise.all([cRes.json(), pRes.json()])
       setCompanies(cData.companies ?? [])
       setProducts(pData.products ?? [])
