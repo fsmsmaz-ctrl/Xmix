@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Package, Plus, Pencil, Trash2, Search, Store, LogIn, ImageOff,
+  LayoutDashboard, Package, Plus, Pencil, Trash2, Search, Store, LogIn, ImageOff, MapPin,
 } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
@@ -14,8 +14,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { ProductDialog, OverviewTab, OrdersTab } from './dashboard-parts'
+import { ShelfGeoTab } from './ShelfGeoTab'
 
-type Tab = 'overview' | 'products' | 'orders'
+type Tab = 'overview' | 'products' | 'orders' | 'shelf'
 
 export function DashboardView() {
   const lang = useXmix((s) => s.lang)
@@ -112,6 +113,7 @@ export function DashboardView() {
     { key: 'overview', label: d.tabOverview[lang], icon: LayoutDashboard },
     { key: 'products', label: `${d.tabProducts[lang]} (${products.length})`, icon: Package },
     { key: 'orders', label: d.tabOrders[lang], icon: Store },
+    { key: 'shelf', label: `📍 ${t.geo.tabShelf[lang]}`, icon: MapPin },
   ]
 
   return (
@@ -174,6 +176,8 @@ export function DashboardView() {
         <OverviewTab stats={stats} lang={lang} />
       ) : tab === 'orders' ? (
         <OrdersTab orders={orders} lang={lang} />
+      ) : tab === 'shelf' ? (
+        <ShelfGeoTab />
       ) : (
         /* ---------- products tab ---------- */
         <div className="space-y-4">
