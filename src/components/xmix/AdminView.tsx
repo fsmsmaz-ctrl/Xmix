@@ -55,15 +55,25 @@ export function AdminView() {
     setLoading(true)
     try {
       const [oRes, uRes, rRes] = await Promise.all([
-        fetch('/api/system/overview').then((r) => r.json()),
-        fetch('/api/system/users').then((r) => r.json()),
-        fetch('/api/system/join-requests').then((r) => r.json()),
+        fetch('/api/system/overview'),
+        fetch('/api/system/users'),
+        fetch('/api/system/join-requests'),
       ])
-      if (oRes.overview) setOverview(oRes.overview)
-      if (uRes.users) setUsers(uRes.users)
-      if (rRes.requests) setRequests(rRes.requests)
-    } catch {
-      toast({ title: t.misc.errorLoad[lang], variant: 'destructive' })
+      // BUG-FIX (فشل صامت): 401/500 كانت تبدو لوحة فارغة بلا رسالة —
+      // (مثال: انتهاء الجلسة). الآن يظهر خطأ الخادم بوضوح.
+      if (!oRes.ok || !uRes.ok || !rRes.ok) {
+        const j = await oRes.json().catch(() => null)
+        throw new Error(j?.error || 'failed')
+      }
+      const [oData, uData, rData] = await Promise.all([oRes.json(), uRes.json(), rRes.json()])
+      if (oData.overview) setOverview(oData.overview)
+      if (uData.users) setUsers(uData.users)
+      if (rData.requests) setRequests(rData.requests)
+    } catch (e) {
+      toast({
+        title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
