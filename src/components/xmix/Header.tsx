@@ -35,6 +35,7 @@ export function Header() {
   const navItems: { label: string; active: boolean; go: () => void }[] = [
     { label: t.nav.home[lang], active: view.name === 'home', go: () => navigate({ name: 'home' }) },
     { label: t.nav.shop[lang], active: view.name === 'shop', go: () => navigate({ name: 'shop' }) },
+    { label: t.nav.nearby[lang], active: view.name === 'nearby', go: () => navigate({ name: 'nearby' }) },
     { label: t.nav.companies[lang], active: view.name === 'companies' || view.name === 'company', go: () => navigate({ name: 'companies' }) },
     { label: t.nav.about[lang], active: view.name === 'about', go: () => navigate({ name: 'about' }) },
     { label: t.nav.contact[lang], active: view.name === 'contact', go: () => navigate({ name: 'contact' }) },
