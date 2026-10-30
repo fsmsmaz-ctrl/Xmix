@@ -41,15 +41,25 @@ export function DashboardView() {
     setLoading(true)
     try {
       const [sRes, pRes, oRes] = await Promise.all([
-        fetch('/api/admin/stats').then((r) => r.json()),
-        fetch('/api/admin/products').then((r) => r.json()),
-        fetch('/api/admin/orders').then((r) => r.json()),
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/products'),
+        fetch('/api/admin/orders'),
       ])
-      if (sRes.stats) setStats(sRes.stats)
-      if (pRes.products) setProducts(pRes.products)
-      if (oRes.orders) setOrders(oRes.orders)
-    } catch {
-      toast({ title: t.misc.errorLoad[lang], variant: 'destructive' })
+      // BUG-FIX (فشل صامت): استجابة 401/500 كانت تُقرأ JSON بلا بيانات فتبدو
+      // اللوحة فارغة بلا أي رسالة (مثال: انتهاء الجلسة). الآن يظهر خطأ الخادم.
+      if (!sRes.ok || !pRes.ok || !oRes.ok) {
+        const j = await sRes.json().catch(() => null)
+        throw new Error(j?.error || 'failed')
+      }
+      const [sData, pData, oData] = await Promise.all([sRes.json(), pRes.json(), oRes.json()])
+      if (sData.stats) setStats(sData.stats)
+      if (pData.products) setProducts(pData.products)
+      if (oData.orders) setOrders(oData.orders)
+    } catch (e) {
+      toast({
+        title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
