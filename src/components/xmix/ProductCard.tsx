@@ -5,6 +5,7 @@ import type { Company, Lang, Product } from '@/lib/types'
 import { productGallery } from '@/lib/types'
 import { parseDetailsLine, detailChip } from '@/lib/details'
 import { useXmix } from '@/store/xmix'
+import { t } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
 import { StarRating } from './shared'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ export function ProductCard({
   const lang = useXmix((s) => s.lang)
   const navigate = useXmix((s) => s.navigate)
   const addToCart = useXmix((s) => s.addToCart)
+  const sessionChecked = useXmix((s) => s.sessionChecked)
 
   const name = lang === 'ar' ? product.nameAr : product.nameEn
   const companyName = company ? (lang === 'ar' ? company.nameAr : company.nameEn) : undefined
@@ -36,7 +38,10 @@ export function ProductCard({
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (product.stock <= 0) return
-    addToCart({
+    // BUG-FIX (الطلب بلا حساب): البوابة في المخزن ترفض الضيوف وتفتح
+    // نافذة التسجيل — هنا نُظهر رسالة مطابقة فقط عند نجاح الإضافة
+    // أو عند الحاجة الفعلية للتنبيه (بعد اكتمال فحص الجلسة)
+    const added = addToCart({
       productId: product.id,
       companyId: product.companyId,
       nameAr: product.nameAr,
@@ -49,7 +54,11 @@ export function ProductCard({
       companyAr: company?.nameAr ?? '',
       companyEn: company?.nameEn ?? '',
     })
-    toast({ title: lang === 'ar' ? 'تمت الإضافة إلى السلة 🛒' : 'Added to cart 🛒', description: name })
+    if (added) {
+      toast({ title: lang === 'ar' ? 'تمت الإضافة إلى السلة 🛒' : 'Added to cart 🛒', description: name })
+    } else if (sessionChecked) {
+      toast({ title: t.cart.loginToAdd[lang], description: name })
+    }
   }
 
   return (
