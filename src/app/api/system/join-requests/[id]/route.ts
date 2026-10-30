@@ -56,6 +56,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       tempPassword: result.tempPassword ?? null,
     })
   } catch (e) {
+    // التاجر القائم (له رف بالفعل) → 409 بدل 500 (BUG-FIX: رف يتيم)
+    if (e instanceof Error && e.message === 'ALREADY_MERCHANT')
+      return NextResponse.json(
+        { error: 'هذا البريد تاجر بالفعل ولديه رف — لا يمكن إنشاء رف ثانٍ | This email is already a merchant with a shelf' },
+        { status: 409 },
+      )
     console.error('POST /api/system/join-requests/[id] error:', e)
     return NextResponse.json({ error: 'Failed to process join request' }, { status: 500 })
   }
