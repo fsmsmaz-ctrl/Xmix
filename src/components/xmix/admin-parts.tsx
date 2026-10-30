@@ -147,10 +147,19 @@ export function CompaniesTab({ lang, onChanged }: { lang: Lang; onChanged: () =>
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/system/companies').then((r) => r.json())
-      setCompanies(res.companies ?? [])
-    } catch {
-      toast({ title: t.misc.errorLoad[lang], variant: 'destructive' })
+      const res = await fetch('/api/system/companies')
+      // BUG-FIX (فشل صامت): 401/500 كانت تُقرأ JSON بلا بيانات فتبدو القائمة فارغة بلا رسالة
+      if (!res.ok) {
+        const j = await res.json().catch(() => null)
+        throw new Error(j?.error || 'failed')
+      }
+      const data = await res.json()
+      setCompanies(data.companies ?? [])
+    } catch (e) {
+      toast({
+        title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -413,10 +422,19 @@ export function OrdersTab({ lang }: { lang: Lang }) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/system/orders').then((r) => r.json())
-      setOrders(res.orders ?? [])
-    } catch {
-      toast({ title: t.misc.errorLoad[lang], variant: 'destructive' })
+      const res = await fetch('/api/system/orders')
+      // BUG-FIX (فشل صامت): 401/500 كانت تُقرأ JSON بلا بيانات فتبدو القائمة فارغة بلا رسالة
+      if (!res.ok) {
+        const j = await res.json().catch(() => null)
+        throw new Error(j?.error || 'failed')
+      }
+      const data = await res.json()
+      setOrders(data.orders ?? [])
+    } catch (e) {
+      toast({
+        title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
