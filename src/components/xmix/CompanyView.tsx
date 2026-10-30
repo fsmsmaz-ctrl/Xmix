@@ -2,13 +2,37 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Star, ArrowRight, ArrowLeft } from 'lucide-react'
+import { MapPin, Star, Truck, Navigation, ArrowRight, ArrowLeft } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
+import { areaByKey, formatKm, haversineKm } from '@/lib/geo'
 import { ProductCard } from './ProductCard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+
+/** مسافة الزبون الحالي إلى هذا الرف — تظهر فقط لمن حدّد موقعه */
+function CustomerDistance({ company }: { company: Company }) {
+  const lang = useXmix((s) => s.lang)
+  const geo = useXmix((s) => s.geo)
+  const coords =
+    company.lat != null && company.lng != null
+      ? { lat: company.lat, lng: company.lng }
+      : company.cityKey
+        ? (() => {
+            const a = areaByKey(company.cityKey)
+            return a ? { lat: a.lat, lng: a.lng } : null
+          })()
+        : null
+  if (!geo || !coords) return null
+  const km = haversineKm(geo.lat, geo.lng, coords.lat, coords.lng)
+  if (km === null) return null
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-black/25 px-2 py-0.5 font-bold text-white" dir="ltr">
+      <Navigation size={13} /> {formatKm(km, lang)}
+    </span>
+  )
+}
 
 export function CompanyView({
   company,
@@ -76,6 +100,15 @@ export function CompanyView({
                 <span className="flex items-center gap-1.5">
                   <MapPin size={13} /> {lang === 'ar' ? company.locationAr : company.locationEn}
                 </span>
+                {/* استراتيجية «الأقرب إليك»: شارة التوصيل + مسافة الزبون الحالي */}
+                {company.hasDelivery ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-400/20 border border-emerald-200/30 px-2 py-0.5 font-bold text-emerald-50">
+                    <Truck size={13} /> {t.geo.deliveryAvailable[lang]}
+                  </span>
+                ) : (
+                  <span>🏪 {t.geo.noDelivery[lang]}</span>
+                )}
+                <CustomerDistance company={company} />
                 <span>📦 {companyProducts.length} {t.companies.productsOnShelf[lang]}</span>
               </div>
             </div>
