@@ -39,17 +39,27 @@ interface XmixState {
   navigate: (view: View) => void
 
   cart: CartItem[]
-  addToCart: (item: Omit<CartItem, 'qty'>, qty?: number) => void
+  /** BUG-FIX (الطلب بلا حساب): تُضيف للسلة لأصحاب الحسابات فقط.
+   *  يعيد true عند الإضافة الفعلية، وfalse عند الرفض (مع فتح نافذة
+   *  التسجيل بسبب 'cart' — انظر openAuth أدناه). */
+  addToCart: (item: Omit<CartItem, 'qty'>, qty?: number) => boolean
   removeFromCart: (productId: string) => void
   setQty: (productId: string, qty: number) => void
   clearCart: () => void
 
   user: SessionUser | null
   setUser: (u: SessionUser | null) => void
+  /** هل انتهى فحص الجلسة عند الإقلاع (/api/auth/me)؟ — يمنع ظهور
+   *  نافذة التسجيل خطأً لمستخدم مسجل خلال ومضة التحميل الأولى */
+  sessionChecked: boolean
+  setSessionChecked: (v: boolean) => void
 
   authOpen: boolean
   authMode: 'login' | 'register'
-  openAuth: (mode?: 'login' | 'register') => void
+  /** لماذا فُتحت نافذة الدخول؟ ('cart' = أراد الإضافة للسلة/الإتمام) —
+   *  تُعرض رسالة تشرح السبب داخل النافذة */
+  authReason: string | null
+  openAuth: (mode?: 'login' | 'register', reason?: string | null) => void
   closeAuth: () => void
 
   shopFilters: ShopFilters
@@ -129,10 +139,20 @@ export const useXmix = create<XmixState>()(
       },
 
       cart: [],
+      // BUG-FIX (الطلب بلا حساب): إضافة الغرض للسلة كانت متاحة للزوار —
+      // والدفع كان يسمح بإتمام الطلب بلا حساب أصلاً. الآن: الحساب إلزامي
+      // من أول إضافة للسلة. ضيف ← تُفتح نافذة التسجيل (الوضع 'register'
+      // بسبب 'cart') وتُرفض الإضافة. أثناء فحص الجلسة عند الإقلاع
+      // (sessionChecked=false) الرفض صامت بلا نافذة حتى لا تُقلق مستخدمًا مسجلاً.
       addToCart: (item, qty = 1) => {
         // حماية إضافية: صنف مخزونه 0 (أو سالب) لا يُضاف إطلاقاً
-        if (item.stock <= 0) return
-        const cart = get().cart
+        if (item.stock <= 0) return false
+        const s = get()
+        if (!s.user) {
+          if (s.sessionChecked) s.openAuth('register', 'cart')
+          return false
+        }
+        const cart = s.cart
         const existing = cart.find((c) => c.productId === item.productId)
         if (existing) {
           set({
@@ -145,6 +165,7 @@ export const useXmix = create<XmixState>()(
         } else {
           set({ cart: [...cart, { ...item, qty: Math.min(qty, item.stock) }] })
         }
+        return true
       },
       removeFromCart: (productId) =>
         set({ cart: get().cart.filter((c) => c.productId !== productId) }),
@@ -161,11 +182,15 @@ export const useXmix = create<XmixState>()(
 
       user: null,
       setUser: (user) => set({ user }),
+      sessionChecked: false,
+      setSessionChecked: (v) => set({ sessionChecked: v }),
 
       authOpen: false,
       authMode: 'login',
-      openAuth: (mode = 'login') => set({ authOpen: true, authMode: mode }),
-      closeAuth: () => set({ authOpen: false }),
+      authReason: null,
+      openAuth: (mode = 'login', reason = null) =>
+        set({ authOpen: true, authMode: mode, authReason: reason }),
+      closeAuth: () => set({ authOpen: false, authReason: null }),
 
       shopFilters: DEFAULT_FILTERS,
       setShopFilters: (f) => set({ shopFilters: { ...get().shopFilters, ...f } }),
