@@ -205,14 +205,20 @@ export async function reconcileCart(): Promise<boolean> {
   const cart = useXmix.getState().cart
   if (cart.length === 0) return false
   try {
-    const ids = cart.map((c) => c.productId).join(',')
-    const res = await fetch(`/api/products?ids=${encodeURIComponent(ids)}`, { cache: 'no-store' })
-    if (!res.ok) return false
-    const data = (await res.json()) as {
-      products?: Array<{ id: string; price: number; stock: number }>
+    // BUG-FIX (سلة >50 صنفاً): الـ API يقبل 50 معرفاً كحد أقصى في الطلب —
+    // الأصناف التي تجاوزت السقف لم تكن تعود في الاستجابة فتُعامل كمحذوفة
+    // وتُسقط من السلة بصمت. الآن تُجلب المعرفات بدفعات من 50 وتُدمج النتائج.
+    const ids = cart.map((c) => c.productId)
+    const map = new Map<string, { id: string; price: number; stock: number }>()
+    for (let i = 0; i < ids.length; i += 50) {
+      const batch = ids.slice(i, i + 50)
+      const res = await fetch(`/api/products?ids=${encodeURIComponent(batch.join(','))}`, { cache: 'no-store' })
+      if (!res.ok) return false
+      const data = (await res.json()) as {
+        products?: Array<{ id: string; price: number; stock: number }>
+      }
+      for (const p of data.products ?? []) map.set(p.id, p)
     }
-    const fresh = data.products ?? []
-    const map = new Map(fresh.map((p) => [p.id, p]))
     let changed = false
     const next: CartItem[] = []
     for (const c of cart) {
