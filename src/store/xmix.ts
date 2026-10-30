@@ -78,7 +78,8 @@ export const DEFAULT_FILTERS: ShopFilters = {
 }
 
 /** ارفع الرقم عند تعديل خيارات الاهتمامات لتظهر نافذة الترحيب مجدداً للزبائن القدامى */
-export const INTERESTS_VERSION = 1
+/* v2: أُضيف قسما اغراض مستعملة ♻️ والأكلات المنزلية 🍲 لخيارات الاهتمامات */
+export const INTERESTS_VERSION = 2
 /** بعد هذه المدة يظهر تنبيه لطيف لتحديث الاهتمامات (14 يوماً) */
 export const INTERESTS_STALE_MS = 14 * 24 * 60 * 60 * 1000
 
