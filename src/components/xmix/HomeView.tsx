@@ -1,15 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   ShieldCheck, Truck, LayoutGrid, Headset, ArrowLeft, ArrowRight, Building2,
-  Package, Wrench, Bike,
+  Package, Wrench, Bike, MapPin, Star, Navigation,
 } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
-import type { Company, Product } from '@/lib/types'
+import type { Company, NearbyStore, Product } from '@/lib/types'
 import { CATEGORIES, AGRI_CATEGORY_KEYS, AGRI_FILTER_PRESET, isAgriCategory } from '@/lib/types'
+import { distanceBucket } from '@/lib/geo'
 import { ProductCard } from './ProductCard'
 import { SectionTitle, StarRating } from './shared'
 import { Logo } from './Logo'
@@ -30,6 +31,8 @@ export function HomeView({
   const interestsStale = useXmix((s) => s.interestsStale)
   const openInterests = useXmix((s) => s.openInterests)
   const dismissStaleBanner = useXmix((s) => s.dismissStaleBanner)
+  const geo = useXmix((s) => s.geo)
+  const openGeoPrompt = useXmix((s) => s.openGeoPrompt)
   const isRTL = lang === 'ar'
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
 
@@ -80,6 +83,35 @@ export function HomeView({
         Number(b.isBestSeller) - Number(a.isBestSeller) || b.rating - a.rating)
       .slice(0, 10)
   }, [products, interests])
+
+  // «الأقرب إليك»: أبرز 6 محلات من استراتيجية القرب (قرب ← جودة ← توصيل)
+  const [nearby, setNearby] = useState<NearbyStore[]>([])
+  const nearbyQuery = useMemo(() => {
+    if (!geo) return null
+    const sp = new URLSearchParams({ limit: '6', perStore: '4' })
+    if (geo.mode === 'gps') {
+      sp.set('lat', String(geo.lat))
+      sp.set('lng', String(geo.lng))
+    } else {
+      sp.set('city', geo.cityKey)
+    }
+    return sp.toString()
+  }, [geo])
+  useEffect(() => {
+    if (!nearbyQuery) return
+    let alive = true
+    fetch(`/api/nearby?${nearbyQuery}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { stores?: NearbyStore[] }) => {
+        if (alive) setNearby(d.stores ?? [])
+      })
+      .catch(() => {
+        /* فشل صامت — الشريط مجرد إثراء، والقسم الكامل يعرض الخطأ */
+      })
+    return () => {
+      alive = false
+    }
+  }, [nearbyQuery])
 
   return (
     <div className="pb-16">
@@ -245,6 +277,98 @@ export function HomeView({
               </Button>
             </motion.div>
           </div>
+        </section>
+
+        {/* ============ الأقرب إليك — استراتيجية القرب 📍 ============ */}
+        <section className="pt-12">
+          <SectionTitle
+            title={`📍 ${t.geo.nearbyTitle[lang]}`}
+            subtitle={t.geo.nearbyDesc[lang]}
+            action={
+              geo ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate({ name: 'nearby' })}
+                  className="gap-1.5 rounded-xl font-bold"
+                >
+                  {t.geo.viewAllNearby[lang]} <ArrowIcon size={15} />
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={openGeoPrompt}
+                  className="gap-1.5 rounded-xl font-bold"
+                >
+                  <MapPin size={14} /> {t.geo.setNow[lang]}
+                </Button>
+              )
+            }
+          />
+          {nearbyQuery && nearby.length > 0 ? (
+            <div className="xmix-shelf flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
+              {nearby.map((s) => {
+                const bucket = distanceBucket(s.distanceKm, lang)
+                return (
+                  <motion.button
+                    key={s.id}
+                    whileHover={{ y: -3 }}
+                    onClick={() => navigate({ name: 'company', slug: s.slug })}
+                    className="w-60 shrink-0 text-start xmix-card-hover rounded-2xl border bg-card p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-12 w-12 rounded-2xl flex items-center justify-center text-2xl border border-white/20 shrink-0"
+                        style={{ background: s.gradient }}
+                        aria-hidden
+                      >
+                        {s.emoji}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black truncate">{lang === 'ar' ? s.nameAr : s.nameEn}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {lang === 'ar' ? (s.areaAr || s.locationAr) : (s.areaEn || s.locationEn)}
+                          {s.distanceKm !== null && (
+                            <> · {lang === 'ar' ? s.distanceLabel : s.distanceLabelEn}</>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-black text-amber-400">
+                        <Star size={10} className="fill-amber-400 text-amber-400" /> {s.rating.toFixed(1)}
+                      </span>
+                      {s.hasDelivery ? (
+                        <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                          {t.geo.deliveryAvailable[lang]}
+                        </span>
+                      ) : (
+                        <span className="rounded-md bg-secondary/80 px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+                          🏪 {t.geo.noDelivery[lang]}
+                        </span>
+                      )}
+                      {bucket && (
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${bucket.cls}`}>
+                          {bucket.label}
+                        </span>
+                      )}
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-violet-500/40 bg-violet-500/5 px-5 py-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20 text-violet-300 shrink-0">
+                <Navigation size={18} />
+              </span>
+              <p className="text-sm font-bold flex-1 min-w-40">{t.geo.locationNotSet[lang]}</p>
+              <Button size="sm" onClick={openGeoPrompt} className="rounded-xl gap-1.5 font-bold shadow-md shadow-violet-900/30">
+                <MapPin size={14} /> {t.geo.setNow[lang]}
+              </Button>
+            </div>
+          )}
         </section>
 
         {/* ============ مختارات لك — بناءً على اهتمامات الزبون ============ */}
