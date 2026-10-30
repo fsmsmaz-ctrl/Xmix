@@ -19,6 +19,7 @@ export function CheckoutView() {
   const user = useXmix((s) => s.user)
   const navigate = useXmix((s) => s.navigate)
   const clearCart = useXmix((s) => s.clearCart)
+  const openAuth = useXmix((s) => s.openAuth)
 
   const [form, setForm] = useState({
     customerName: user?.name ?? '',
@@ -47,12 +48,48 @@ export function CheckoutView() {
       alive = false
     }  }, [])
 
+  // BUG-FIX (الطلب بلا حساب): بعد تسجيل الدخول من بوابة الدفع نفسها
+  // نعبّئ الاسم تلقائياً من الحساب (ما كان يبقى فارغاً لأن الحالة
+  // تهيأت قبل اكتمال الدخول)
+  useEffect(() => {
+    if (user && !form.customerName.trim()) {
+      setForm((f) => ({ ...f, customerName: user.name }))
+    }
+  }, [user])
+
   if (cart.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 pb-24 text-center">
         <span className="text-6xl block mb-4">🛒</span>
         <p className="font-bold mb-6">{t.cart.empty[lang]}</p>
         <Button onClick={() => navigate({ name: 'shop' })} className="rounded-xl">{t.cart.browse[lang]}</Button>
+      </div>
+    )
+  }
+
+  // BUG-FIX (الطلب بلا حساب): صفحة الدفع كانت تسمح للضيوف بإتمام الطلب
+  // كاملاً بلا حساب (ويُحفظ الطلب userId=null فلا يستطيع تتبعه). الآن:
+  // الحساب إلزامي — بوابة واضحة بدل الحماية، وسلته محفوظة ولن يفقدها.
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 pb-24 text-center">
+        <span className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 border border-violet-500/30 mb-5">
+          <Lock size={36} className="text-primary" />
+        </span>
+        <h1 className="text-xl font-black mb-2">{t.auth.accountRequired[lang]}</h1>
+        <p className="text-sm text-muted-foreground mb-7 leading-relaxed">{t.auth.accountRequiredDesc[lang]}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            size="lg"
+            onClick={() => openAuth('register', 'cart')}
+            className="rounded-xl font-bold shadow-lg shadow-violet-900/30"
+          >
+            {t.auth.register[lang]}
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => openAuth('login', 'cart')} className="rounded-xl font-bold">
+            {t.auth.login[lang]}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -92,13 +129,24 @@ export function CheckoutView() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'error')
+      if (!res.ok) {
+        // BUG-FIX (انتهاء الجلسة): إذا انتهت الجلسة أثناء التسوق نفتح
+        // نافذة الدخول فوراً بدل رسالة خطأ فقط
+        if (res.status === 401) {
+          openAuth('login', 'cart')
+          toast({ title: t.auth.loginFirst[lang], variant: 'destructive' })
+          return
+        }
+        throw new Error(data.error || 'error')
+      }
       clearCart()
       navigate({ name: 'success', orderNumber: data.order.orderNumber })
     } catch (err) {
       // BUG-FIX: نعرض رسالة الخادم الحقيقية (مثال: الكمية المتوفرة، تغيّر المخزون)
-      // بدل رسالة عمومية تخفي السبب عن الزبون — رسائل الخادم بلغتين أصلاً
-      const serverMsg = err instanceof Error && err.message && err.message !== 'error' ? err.message : null
+      // بدل رسالة عمومية تخفي السبب عن الزبون — رسائل الخادم بلغتين «عربي | إنجليزي»
+      // ونعرض لغة الواجهة الحالية فقط
+      const raw = err instanceof Error && err.message && err.message !== 'error' ? err.message : null
+      const serverMsg = raw ? (lang === 'ar' ? raw.split('|')[0].trim() : (raw.split('|')[1] ?? raw).trim()) : null
       toast({
         title: serverMsg ?? (lang === 'ar' ? 'تعذر إتمام الطلب، حاول مجدداً' : 'Could not place the order, try again'),
         variant: 'destructive',
@@ -124,11 +172,6 @@ export function CheckoutView() {
             <h3 className="font-bold flex items-center gap-2">
               📍 {t.checkout.info[lang]}
             </h3>
-            {!user && (
-              <p className="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/25 rounded-xl px-3 py-2.5">
-                💡 {t.checkout.loginHint[lang]}
-              </p>
-            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>{t.checkout.name[lang]} *</Label>
