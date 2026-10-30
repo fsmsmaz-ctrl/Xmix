@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/auth'
 import { GENERAL_CATEGORY, isKnownCategory } from '@/lib/types'
+import { matchAreaFromText } from '@/lib/geo'
 
 /** Transliteration-unfriendly safe slug: keeps latin letters/digits, dashes. */
 export function slugify(text: string): string {
@@ -106,6 +107,11 @@ export async function grantMerchant(
   const city = opts.company.city?.trim() || 'مسقط، سلطنة عُمان'
   const description = opts.company.description?.trim() || ''
 
+  // استراتيجية «الأقرب إليك»: استنتاج الولاية وإحداثياتها من نص المدينة
+  // في طلب الانضمام (مثل «صلالة») منذ اللحظة الأولى — الرف الجديد يظهر
+  // في نتائج «الأقرب إليك» فور اعتماده دون أي خطوة إضافية.
+  const matchedArea = matchAreaFromText(city) ?? matchAreaFromText(nameAr) ?? matchAreaFromText(nameEn)
+
   // Atomic: shelf creation + owner promotion succeed or fail together
   // (prevents an orphaned company with no owner if the second write fails)
   const company = await db.$transaction(async (tx) => {
@@ -124,6 +130,9 @@ export async function grantMerchant(
         gradient: 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
         locationAr: city,
         locationEn: city,
+        cityKey: matchedArea?.key ?? null,
+        lat: matchedArea?.lat ?? null,
+        lng: matchedArea?.lng ?? null,
         rating: 4.5,
         isFeatured: false,
         status: 'active',
