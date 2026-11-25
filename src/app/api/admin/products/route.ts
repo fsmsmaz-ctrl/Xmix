@@ -107,8 +107,7 @@ export async function POST(req: NextRequest) {
         category,
         kind,
         stock,
-        rating: 4.5,
-        reviews: 0,
+        // بلا تقييم ملفق — rating يبدأ 0 (افتراضي المخطط) ولا يعرض حتى تأتي مراجعات حقيقية
         badgeAr: cleanStr(body.badgeAr, 40) || null,
         badgeEn: cleanStr(body.badgeEn, 40) || null,
         isBestSeller: Boolean(body.isBestSeller),
