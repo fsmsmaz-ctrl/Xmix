@@ -33,7 +33,12 @@ model Company {
   deliveryFee Float?
   /// زمن التوصيل التقريبي بالدقائق (اختياري)
   deliveryEta Int?
-  rating      Float     @default(4.5)
+  /// هاتف التواصل مع الزبائن (اختياري — يعرض في صفحة الرف كزر اتصال)
+  phone       String?
+  /// رقم واتساب العمل (اختياري — يعرض كزر محادثة، بصيغة دولية بلا + مثل 968XXXXXXXX)
+  whatsapp    String?
+  /// التقييم الفعلي — يبدأ 0 (بلا تقييم) ولا يعرض بالواجهة حتى توجد مراجعات حقيقية
+  rating      Float     @default(0)
   isFeatured  Boolean   @default(false)
   /// pending = بانتظار موافقة المسؤول | active = معتمدة وظاهرة | suspended = موقوفة
   status      String    @default("active") // pending | active | suspended
@@ -58,7 +63,8 @@ model Product {
   /// product = منتج مادي | service = خدمة (المخزون = طاقة استيعابية للطلبات)
   kind        String      @default("product") // product | service
   stock       Int         @default(20)
-  rating      Float       @default(4.5)
+  /// التقييم الفعلي — يبدأ 0 (بلا تقييم) ولا يعرض حتى توجد مراجعات حقيقية (reviews > 0)
+  rating      Float       @default(0)
   reviews     Int         @default(0)
   badgeAr     String?
   badgeEn     String?
