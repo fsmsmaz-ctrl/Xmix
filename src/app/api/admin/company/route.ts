@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { sanitizeGeoUpdate } from '@/lib/geo'
+import { sanitizePhone } from '@/lib/merchant'
 
 /**
- * GET /api/admin/company — إعدادات موقع الرف والتوصيل (لمالكه التاجر)
+ * GET /api/admin/company — إعدادات الرف: الموقع والتوصيل والتواصل (لمالكه التاجر)
  * PATCH /api/admin/company — تحديثها: { cityKey?, lat+lng?, hasDelivery?,
- *   deliveryFee?, deliveryEta?, resetGeo? }
- * الحارس: جلسة تاجر (owner) له شركة فقط. التعقيم عبر sanitizeGeoUpdate.
+ *   deliveryFee?, deliveryEta?, phone?, whatsapp?, resetGeo? }
+ * الحارس: جلسة تاجر (owner) له شركة فقط. التعقيم عبر sanitizeGeoUpdate
+ * (الموقع) و sanitizePhone (هاتف/واتساب التواصل).
  */
 
 async function ownerCompanyId(): Promise<string | null> {
@@ -36,6 +38,8 @@ export async function GET() {
         hasDelivery: true,
         deliveryFee: true,
         deliveryEta: true,
+        phone: true,
+        whatsapp: true,
       },
     })
     if (!company) return NextResponse.json({ error: 'الرف غير موجود | Shelf not found' }, { status: 404 })
@@ -56,7 +60,7 @@ export async function PATCH(req: NextRequest) {
       | null
     if (!body) return NextResponse.json({ error: 'حمولة غير صالحة | Invalid payload' }, { status: 400 })
 
-    // مسح الموقع كاملاً (عند فشل GPS مثلاً) — لا يلمس إعدادات التوصيل
+    // مسح الموقع كاملاً (عند فشل GPS مثلاً) — لا يلمس إعدادات التوصيل والتواصل
     if (body.resetGeo === true) {
       const company = await db.company.update({
         where: { id: companyId },
@@ -65,11 +69,34 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ company: { id: company.id, cityKey: company.cityKey, lat: company.lat, lng: company.lng } })
     }
 
-    const geo = sanitizeGeoUpdate(body)
-    if (geo.error || geo.data === null)
+    // الموقع والتوصيل — allowEmpty لأن الطلب قد يحمل حقول تواصل فقط
+    const geo = sanitizeGeoUpdate(body, { allowEmpty: true })
+    if (geo.data === null)
       return NextResponse.json({ error: geo.error || 'حمولة غير صالحة | Invalid payload' }, { status: 400 })
 
-    const company = await db.company.update({ where: { id: companyId }, data: geo.data })
+    const data: Record<string, unknown> = { ...geo.data }
+    let touched = Object.keys(geo.data).length > 0
+
+    // تواصل الزبائن — هاتف واتساب (فارغ = حذف الحقل)
+    if (body.phone !== undefined) {
+      const p = sanitizePhone(body.phone)
+      if (!p.ok)
+        return NextResponse.json({ error: 'رقم الهاتف غير صالح (8–15 خانة) | Invalid phone number (8–15 digits)' }, { status: 400 })
+      data.phone = p.value
+      touched = true
+    }
+    if (body.whatsapp !== undefined) {
+      const w = sanitizePhone(body.whatsapp)
+      if (!w.ok)
+        return NextResponse.json({ error: 'رقم واتساب غير صالح (8–15 خانة) | Invalid WhatsApp number (8–15 digits)' }, { status: 400 })
+      data.whatsapp = w.value
+      touched = true
+    }
+
+    if (!touched)
+      return NextResponse.json({ error: 'لا حقول لتحديثها | No fields to update' }, { status: 400 })
+
+    const company = await db.company.update({ where: { id: companyId }, data })
     return NextResponse.json({
       company: {
         id: company.id,
@@ -79,6 +106,8 @@ export async function PATCH(req: NextRequest) {
         hasDelivery: company.hasDelivery,
         deliveryFee: company.deliveryFee,
         deliveryEta: company.deliveryEta,
+        phone: company.phone,
+        whatsapp: company.whatsapp,
       },
     })
   } catch (e) {
