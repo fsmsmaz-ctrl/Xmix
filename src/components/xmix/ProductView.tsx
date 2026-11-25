@@ -129,9 +129,15 @@ export function ProductView({
             )}
             <h1 className="text-xl sm:text-3xl font-black mt-3 leading-snug">{name}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-2.5">
-              <StarRating rating={product.rating} size={16} />
-              <span className="text-sm font-bold">{product.rating.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">({product.reviews} {t.product.reviews[lang]})</span>
+              {product.reviews > 0 ? (
+                <>
+                  <StarRating rating={product.rating} size={16} />
+                  <span className="text-sm font-bold">{product.rating.toFixed(1)}</span>
+                  <span className="text-xs text-muted-foreground">({product.reviews} {t.product.reviews[lang]})</span>
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">🆕 {t.product.noReviews[lang]}</span>
+              )}
               <span
                 className={`text-[11px] font-extrabold rounded-full px-2.5 py-1 border ${
                   isService
