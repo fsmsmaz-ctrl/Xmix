@@ -37,8 +37,8 @@ export const t = {
     },
     products: { ar: 'منتجات', en: 'Products' },
     productsDesc: {
-      ar: 'تشكيلة واسعة تتصدرها المنتجات الزراعية والمحاصيل والبذور والمنتجات المحلية، إلى جانب إلكترونيات وأزياء ومستلزمات منزل وبقالة — بأسعار واضحة وضمان.',
-      en: 'A wide range led by agricultural products, crops, seeds and local goods, alongside electronics, fashion, home essentials and groceries — clear prices and guarantees.',
+      ar: 'تشكيلة واسعة تتصدرها المنتجات الزراعية والمحاصيل والبذور والمنتجات المحلية، إلى جانب إلكترونيات وأزياء ومستلزمات منزل وبقالة — بأسعار واضحة.',
+      en: 'A wide range led by agricultural products, crops, seeds and local goods, alongside electronics, fashion, home essentials and groceries — at clear prices.',
     },
     services: { ar: 'خدمات', en: 'Services' },
     servicesDesc: {
@@ -83,7 +83,7 @@ export const t = {
     unified: { ar: 'تجربة موحّدة', en: 'Unified Experience' },
     unifiedDesc: { ar: 'سلة وطلب واحد لكل المحلات — تسوّق من عدة محلات وادفع مرة واحدة.', en: 'One cart and checkout for every shop — buy from multiple shops, pay once.' },
     secure: { ar: 'دفع آمن', en: 'Secure Payment' },
-    secureDesc: { ar: 'خيارات دفع متعددة محمية بأحدث أنظمة التشفير، مع ضمان استرداد.', en: 'Multiple payment options protected by modern encryption, with refund guarantee.' },
+    secureDesc: { ar: 'الدفع عند الاستلام أو بالتحويل البنكي — بلا عمولة إضافية، وبياناتك محفوظة ولا تُشارك مع أي جهة.', en: 'Cash on delivery or bank transfer — no extra fees, and your data stays private.' },
   },
   product: {
     addToCart: { ar: 'أضف إلى السلة', en: 'Add to Cart' },
@@ -95,6 +95,7 @@ export const t = {
     available: { ar: 'متاحة للحجز', en: 'Available' },
     lowStock: { ar: 'الكمية محدودة', en: 'Low stock' },
     reviews: { ar: 'تقييم', en: 'reviews' },
+    noReviews: { ar: 'جديد — بلا مراجعات بعد', en: 'New — no reviews yet' },
     by: { ar: 'من محل', en: 'From shop' },
     kindProduct: { ar: 'منتج', en: 'Product' },
     kindService: { ar: 'خدمة', en: 'Service' },
@@ -108,8 +109,8 @@ export const t = {
     added: { ar: 'تمت الإضافة إلى السلة', en: 'Added to cart' },
     details: { ar: 'تفاصيل المنتج', en: 'Product Details' },
     freeShip: { ar: 'توصيل مجاني للطلبات فوق 50 ر.ع.', en: 'Free delivery on orders over OMR 50' },
-    returns: { ar: 'إرجاع مجاني خلال 14 يوماً', en: 'Free returns within 14 days' },
-    warranty: { ar: 'منتج أصلي من محل موثّق', en: 'Original product from a verified shop' },
+    returns: { ar: 'الاستبدال والإرجاع بحسب اتفاقك مع المحل', en: 'Exchanges and returns as agreed with the shop' },
+    warranty: { ar: 'من محل معتمد من إدارة السوق', en: 'From a marketplace-approved shop' },
     photos: { ar: 'صورة', en: 'photos' },
     viewGallery: { ar: 'عرض الصورة بالحجم الكامل', en: 'View full-size image' },
     closeGallery: { ar: 'إغلاق', en: 'Close' },
@@ -274,6 +275,10 @@ export const t = {
     addressVal: { ar: 'مسقط، سلطنة عُمان — طريق السلطان قابوس', en: 'Muscat, Oman — Sultan Qaboos Road' },
     hours: { ar: 'أوقات العمل', en: 'Working hours' },
     hoursVal: { ar: 'الأحد - الخميس: 9ص - 6م', en: 'Sun - Thu: 9AM - 6PM' },
+    // تواصل الزبون مع المحل (صفحة الرف)
+    shopTitle: { ar: 'تواصل مع المحل', en: 'Contact the shop' },
+    call: { ar: 'اتصال', en: 'Call' },
+    whatsapp: { ar: 'واتساب', en: 'WhatsApp' },
   },
   join: {
     title: { ar: 'افتح محلك في Xmix', en: 'Open Your Shop on Xmix' },
@@ -675,8 +680,7 @@ export const t = {
     errorLoad: { ar: 'تعذر جلب المحلات القريبة', en: 'Failed to load nearby shops' },
     retry: { ar: 'إعادة المحاولة', en: 'Retry' },
     // تبويب التاجر: موقع الرف والتوصيل
-    tabShelf: { ar: 'الموقع والتوصيل', en: 'Location & Delivery' },
-    shelfGeoTitle: { ar: '📍 موقع رفك وخدمة التوصيل', en: '📍 Your shelf location & delivery' },
+    tabShelf: { ar: 'الموقع والتوصيل', en: 'Location & Delivery' },    shelfGeoTitle: { ar: '📍 موقع رفك وخدمة التوصيل', en: '📍 Your shelf location & delivery' },
     shelfGeoDesc: {
       ar: 'بضبط الموقع يدخل رفك في نتائج «الأقرب إليك» لكل زبون قريب منك — والأعلى جودة مع توصيل متاح يتصدر دائماً',
       en: 'Setting your location puts your shelf in “Near Me” results for every nearby customer — top quality with delivery always leads',
@@ -690,11 +694,25 @@ export const t = {
     feeLabel: { ar: 'رسوم التوصيل (ر.ع) — اتركه فارغاً لتجاهله', en: 'Delivery fee (OMR) — leave empty to hide' },
     etaLabel: { ar: 'زمن التوصيل التقريبي', en: 'Estimated delivery time' },
     etaUnset: { ar: 'غير محدد', en: 'Not set' },
-    saveGeo: { ar: 'حفظ إعدادات الموقع', en: 'Save location settings' },
-    geoSaved: { ar: '✅ حُفظت إعدادات الموقع — رفك دخل استراتيجية «الأقرب إليك»', en: '✅ Location saved — your shelf joined the “Near Me” strategy' },
+    saveGeo: { ar: 'حفظ إعدادات الرف', en: 'Save shelf settings' },
+    geoSaved: { ar: '✅ حُفظت إعدادات الرف — الموقع والتوصيل والتواصل', en: '✅ Shelf settings saved — location, delivery and contact' },
     resetGeo: { ar: 'مسح الموقع المحفوظ', en: 'Clear saved location' },
     resetConfirm: { ar: 'تمسح موقع رفك من «الأقرب إليك»؟', en: 'Clear your shelf location from “Near Me”?' },
     geoReset: { ar: 'تم مسح الموقع', en: 'Location cleared' },
+    // تواصل الزبائن (تبويب التاجر)
+    contactTitle: { ar: '📞 تواصل الزبائن معك', en: '📞 Customer contact' },
+    contactDesc: {
+      ar: 'أضف رقم هاتف ورقم واتساب عملك — يظهرا في صفحة رفك كأزرار اتصال ومحادثة مباشرة، وثقة الزبون تبدأ بصوت يسمعه.',
+      en: 'Add your business phone and WhatsApp — they appear on your shelf page as call and chat buttons.',
+    },
+    phoneLabel: { ar: 'هاتف التواصل (اختياري)', en: 'Contact phone (optional)' },
+    whatsappLabel: { ar: 'واتساب العمل (اختياري)', en: 'Business WhatsApp (optional)' },
+    contactHint: {
+      ar: 'بصيغة دولية بلا + أو محلياً — مثل 96812345678 أو 91234567',
+      en: 'International without +, or local — e.g. 96812345678 or 91234567',
+    },
+    invalidPhone: { ar: 'رقم غير صالح — من 8 إلى 15 خانة بأرقام فقط', en: 'Invalid number — 8 to 15 digits only' },
+    contactSaved: { ar: '✅ حُفظت بيانات التواصل', en: '✅ Contact details saved' },
     // المسؤول: تحرير موقع أي رف
     geoBtn: { ar: '📍 الموقع', en: '📍 Location' },
     geoDialogTitle: { ar: 'موقع الرف والتوصيل', en: 'Shelf location & delivery' },
