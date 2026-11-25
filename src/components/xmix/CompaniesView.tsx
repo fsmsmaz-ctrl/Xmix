@@ -56,9 +56,12 @@ export function CompaniesView({ companies }: { companies: Company[] }) {
                       {lang === 'ar' ? c.taglineAr : c.taglineEn}
                     </p>
                   </div>
-                  <span className="flex items-center gap-1 text-xs font-bold text-amber-400 shrink-0">
-                    <Star size={13} className="fill-amber-400" /> {c.rating.toFixed(1)}
-                  </span>
+                  {/* نجمة حقيقية فقط — الرفوف الجديدة بلا تقييم لا تُظهر رقماً ملفقاً */}
+                  {c.rating > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-amber-400 shrink-0">
+                      <Star size={13} className="fill-amber-400" /> {c.rating.toFixed(1)}
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
