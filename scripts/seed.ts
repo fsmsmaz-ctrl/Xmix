@@ -48,7 +48,10 @@ async function main() {
       gradient: 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
       locationAr: 'مسقط، سلطنة عُمان',
       locationEn: 'Muscat, Oman',
-      rating: 4.9,
+      cityKey: 'muscat',
+      lat: 23.588,
+      lng: 58.408,
+      // بلا تقييم ملفق — rating يبدأ 0 ولا يعرض بالواجهة حتى تأتي مراجعات حقيقية
       isFeatured: true,
       status: 'active',
     },
