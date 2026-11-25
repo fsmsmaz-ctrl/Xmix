@@ -23,15 +23,22 @@ interface ShelfGeo {
   hasDelivery: boolean
   deliveryFee: number | null
   deliveryEta: number | null
+  phone?: string | null
+  whatsapp?: string | null
 }
 
 /** خيارات زمن التوصيل المعروضة (دقائق) */
 const ETA_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240]
 
+/** تطابق رقم الهاتف/واتساب بعد إزالة الفواصل — نفس قاعدة تعقيم الخادم */
+const PHONE_RE = /^\+?\d{8,15}$/
+const cleanPhone = (v: string) => v.trim().replace(/[\s\-().]/g, '')
+
 /**
  * تبويب «الموقع والتوصيل» في لوحة التاجر — بوابة رفه إلى استراتيجية «الأقرب إليك»:
  *  • ولاية الرف (من سجل الولايات) أو إحداثيات GPS دقيقة
  *  • خدمة التوصيل + الرسوم + الزمن — تدخل كلها في ترتيب النتائج القريبة
+ *  • تواصل الزبائن: هاتف وواتساب — يظهرا في صفحة الرف كأزرار اتصال ومحادثة
  * الحفظ عبر PATCH /api/admin/company (المسار يتحقق من الجلسة والملكية والتعقيم).
  */
 export function ShelfGeoTab() {
@@ -47,6 +54,8 @@ export function ShelfGeoTab() {
   const [hasDelivery, setHasDelivery] = useState(false)
   const [fee, setFee] = useState('')
   const [eta, setEta] = useState('')
+  const [phone, setPhone] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,6 +75,8 @@ export function ShelfGeoTab() {
       setHasDelivery(!!c.hasDelivery)
       setFee(c.deliveryFee != null ? String(c.deliveryFee) : '')
       setEta(c.deliveryEta != null ? String(c.deliveryEta) : '')
+      setPhone(c.phone ?? '')
+      setWhatsapp(c.whatsapp ?? '')
     } catch (e) {
       toast({
         title: e instanceof Error && e.message && e.message !== 'failed' ? e.message : t.misc.errorLoad[lang],
@@ -104,6 +115,13 @@ export function ShelfGeoTab() {
   }
 
   const save = async () => {
+    // تحقق فوري من أرقام التواصل قبل الإرسال (نفس قاعدة تعقيم الخادم)
+    const p = cleanPhone(phone)
+    const w = cleanPhone(whatsapp)
+    if ((p && !PHONE_RE.test(p)) || (w && !PHONE_RE.test(w))) {
+      toast({ title: g.invalidPhone[lang], variant: 'destructive' })
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/admin/company', {
@@ -116,6 +134,8 @@ export function ShelfGeoTab() {
           hasDelivery,
           deliveryFee: fee.trim() === '' ? null : fee,
           deliveryEta: eta.trim() === '' ? null : eta,
+          phone: p,
+          whatsapp: w,
         }),
       })
       if (!res.ok) {
@@ -252,6 +272,39 @@ export function ShelfGeoTab() {
             </select>
           </div>
         </div>
+      </div>
+
+      {/* تواصل الزبائن */}
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-black">{g.contactTitle[lang]}</h3>
+          <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">{g.contactDesc[lang]}</p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4 max-w-xl">
+          <div>
+            <Label className="text-xs font-bold">{g.phoneLabel[lang]}</Label>
+            <Input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="96812345678"
+              className="mt-1.5 rounded-xl bg-secondary/60"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-bold">{g.whatsappLabel[lang]}</Label>
+            <Input
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="96812345678"
+              className="mt-1.5 rounded-xl bg-secondary/60"
+              dir="ltr"
+            />
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground">{g.contactHint[lang]}</p>
       </div>
 
       {/* الحفظ */}
