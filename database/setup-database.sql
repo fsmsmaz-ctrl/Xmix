@@ -35,7 +35,15 @@ CREATE TABLE "Company" (
     "gradient" TEXT NOT NULL,
     "locationAr" TEXT NOT NULL,
     "locationEn" TEXT NOT NULL,
-    "rating" DOUBLE PRECISION NOT NULL DEFAULT 4.5,
+    "lat" DOUBLE PRECISION,
+    "lng" DOUBLE PRECISION,
+    "cityKey" TEXT,
+    "hasDelivery" BOOLEAN NOT NULL DEFAULT false,
+    "deliveryFee" DOUBLE PRECISION,
+    "deliveryEta" INTEGER,
+    "phone" TEXT,
+    "whatsapp" TEXT,
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" TEXT NOT NULL DEFAULT 'active',
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,7 +66,7 @@ CREATE TABLE "Product" (
     "category" TEXT NOT NULL,
     "kind" TEXT NOT NULL DEFAULT 'product',
     "stock" INTEGER NOT NULL DEFAULT 20,
-    "rating" DOUBLE PRECISION NOT NULL DEFAULT 4.5,
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "reviews" INTEGER NOT NULL DEFAULT 0,
     "badgeAr" TEXT,
     "badgeEn" TEXT,
@@ -183,14 +191,14 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") RE
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- 3) محل Xmix الرئيسي (شركة معتمدة — بدون منتجات تجريبية)
-INSERT INTO "Company" ("id","slug","nameAr","nameEn","taglineAr","taglineEn","descAr","descEn","category","emoji","color","gradient","locationAr","locationEn","rating","isFeatured","status","joinedAt") VALUES
+-- 3) محل Xmix الرئيسي (شركة معتمدة — بدون منتجات تجريبية، بلا تقييم ملفق حتى تأتي المراجعات الحقيقية)
+INSERT INTO "Company" ("id","slug","nameAr","nameEn","taglineAr","taglineEn","descAr","descEn","category","emoji","color","gradient","locationAr","locationEn","lat","lng","cityKey","hasDelivery","rating","isFeatured","status","joinedAt") VALUES
 ('cmp_xmix_flagship', 'xmix-main', 'محل Xmix الرئيسي', 'Xmix Main Store',
  'كل ما تحتاجه — منتجات وخدمات وتوصيل سريع', 'Everything you need — products, services and fast delivery',
  'محل Xmix الرئيسي هو الرفّ الرئيسي والشركة الرائدة في سوق Xmix التجاري العام — منتجات وخدمات متنوعة مع خدمة توصيل تغطي سلطنة عُمان.',
  'Xmix Main Store is the flagship shelf of Xmix — Oman’s general marketplace for diverse products and services with delivery across the Sultanate.',
  'general', '🏬', '#8B5CF6', 'linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)',
- 'مسقط، سلطنة عُمان', 'Muscat, Oman', 4.9, TRUE, 'active', CURRENT_TIMESTAMP);
+ 'مسقط، سلطنة عُمان', 'Muscat, Oman', 23.588, 58.408, 'muscat', FALSE, 0, TRUE, 'active', CURRENT_TIMESTAMP);
 
 -- 4) حسابات النظام فقط (مسؤول النظام + تاجر المحل الرئيسي)
 INSERT INTO "User" ("id","email","passwordHash","name","role","companyId","createdAt") VALUES
