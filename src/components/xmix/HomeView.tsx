@@ -336,9 +336,12 @@ export function HomeView({
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-black text-amber-400">
-                        <Star size={10} className="fill-amber-400 text-amber-400" /> {s.rating.toFixed(1)}
-                      </span>
+                      {/* نجمة حقيقية فقط — بلا تقييم ملفق للرفوف الجديدة */}
+                      {s.rating > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-black text-amber-400">
+                          <Star size={10} className="fill-amber-400 text-amber-400" /> {s.rating.toFixed(1)}
+                        </span>
+                      )}
                       {s.hasDelivery ? (
                         <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
                           {t.geo.deliveryAvailable[lang]}
@@ -548,10 +551,13 @@ export function HomeView({
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="hidden sm:flex items-center gap-2 text-white/85 text-xs">
-                        <StarRating rating={company.rating} size={13} />
-                        <span className="font-bold">{company.rating.toFixed(1)}</span>
-                      </div>
+                      {/* نجمة حقيقية فقط — بلا تقييم ملفق للرفوف الجديدة */}
+                      {company.rating > 0 && (
+                        <div className="hidden sm:flex items-center gap-2 text-white/85 text-xs">
+                          <StarRating rating={company.rating} size={13} />
+                          <span className="font-bold">{company.rating.toFixed(1)}</span>
+                        </div>
+                      )}
                       <Button
                         size="sm"
                         onClick={() => navigate({ name: 'company', slug: company.slug })}
