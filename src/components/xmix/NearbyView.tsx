@@ -210,10 +210,13 @@ export function NearbyView() {
                           ? `${g.deliveryAvailable[lang]}${s.deliveryEta ? ` · ${s.deliveryEta} ${g.minutes[lang]}` : ''}`
                           : `🏪 ${g.noDelivery[lang]}`}
                       </span>
-                      <div className="hidden sm:flex items-center gap-2 text-white/90 text-xs">
-                        <Star size={13} className="fill-amber-300 text-amber-300" />
-                        <span className="font-black">{s.rating.toFixed(1)}</span>
-                      </div>
+                      {/* نجمة حقيقية فقط — بلا تقييم ملفق للرفوف الجديدة */}
+                      {s.rating > 0 && (
+                        <div className="hidden sm:flex items-center gap-2 text-white/90 text-xs">
+                          <Star size={13} className="fill-amber-300 text-amber-300" />
+                          <span className="font-black">{s.rating.toFixed(1)}</span>
+                        </div>
+                      )}
                       <Button
                         size="sm"
                         onClick={() => navigate({ name: 'company', slug: s.slug })}
