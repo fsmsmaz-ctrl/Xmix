@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Star, Truck, Navigation, ArrowRight, ArrowLeft } from 'lucide-react'
+import { MapPin, Star, Truck, Navigation, ArrowRight, ArrowLeft, Phone, MessageCircle } from 'lucide-react'
 import { useXmix } from '@/store/xmix'
 import { t } from '@/lib/i18n'
 import type { Company, Product } from '@/lib/types'
@@ -93,10 +93,13 @@ export function CompanyView({
                 {lang === 'ar' ? company.taglineAr : company.taglineEn}
               </p>
               <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-white/80">
-                <span className="flex items-center gap-1.5">
-                  <Star size={14} className="fill-amber-300 text-amber-300" />
-                  <span className="font-bold text-white">{company.rating.toFixed(1)}</span>
-                </span>
+                {/* التقييم يظهر فقط عند وجوده فعلاً — بلا نجوم ملفقة للرفوف الجديدة */}
+                {company.rating > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <Star size={14} className="fill-amber-300 text-amber-300" />
+                    <span className="font-bold text-white">{company.rating.toFixed(1)}</span>
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <MapPin size={13} /> {lang === 'ar' ? company.locationAr : company.locationEn}
                 </span>
@@ -118,11 +121,34 @@ export function CompanyView({
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-8">
         {/* description */}
-        <div className="rounded-2xl border bg-card p-5 mb-8">
+        <div className="rounded-2xl border bg-card p-5 mb-6">
           <p className="text-sm text-muted-foreground leading-relaxed">
             {lang === 'ar' ? company.descAr : company.descEn}
           </p>
         </div>
+
+        {/* تواصل مباشر مع المحل — يظهر فقط لما يوفره التاجر */}
+        {(company.phone || company.whatsapp) && (
+          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5 mb-8">
+            <h2 className="text-sm font-black mb-3">📞 {t.contact.shopTitle[lang]}</h2>
+            <div className="flex flex-wrap gap-3">
+              {company.phone && (
+                <Button asChild className="rounded-xl gap-2 font-bold">
+                  <a href={`tel:${company.phone.replace(/\s/g, '')}`} dir="ltr">
+                    <Phone size={15} /> {t.contact.call[lang]} <span className="hidden sm:inline">{company.phone}</span>
+                  </a>
+                </Button>
+              )}
+              {company.whatsapp && (
+                <Button asChild variant="outline" className="rounded-xl gap-2 font-bold border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10">
+                  <a href={`https://wa.me/${company.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" dir="ltr">
+                    <MessageCircle size={15} /> {t.contact.whatsapp[lang]}
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* products */}
         <h2 className="text-lg font-bold mb-4">
