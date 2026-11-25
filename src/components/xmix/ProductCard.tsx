@@ -136,10 +136,15 @@ export function ProductCard({
             {xdChip}
           </span>
         )}
-        <div className="flex items-center gap-1.5">
-          <StarRating rating={product.rating} size={12} />
-          <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
-        </div>
+        {/* نجمة حقيقية فقط عند وجود مراجعات — وإلا «جديد» بدل رقم ملفق */}
+        {product.reviews > 0 ? (
+          <div className="flex items-center gap-1.5">
+            <StarRating rating={product.rating} size={12} />
+            <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground">🆕 {t.product.noReviews[lang]}</span>
+        )}
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div className="flex flex-col">
             <span className="text-sm font-extrabold text-primary">
