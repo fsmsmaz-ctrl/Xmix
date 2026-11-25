@@ -27,6 +27,9 @@ export interface Company {
   hasDelivery?: boolean
   deliveryFee?: number | null
   deliveryEta?: number | null
+  /* تواصل الزبائن مع الرف — اختيارية للتوافق مع الاستجابات القديمة */
+  phone?: string | null
+  whatsapp?: string | null
   _count?: { products: number }
 }
 
@@ -51,6 +54,9 @@ export interface NearbyStore {
   hasDelivery: boolean
   deliveryFee: number | null
   deliveryEta: number | null
+  /** تواصل الزبائن مع الرف — اختياري للتوافق مع الاستجابات القديمة */
+  phone?: string | null
+  whatsapp?: string | null
   distanceKm: number | null
   distanceLabel: string
   distanceLabelEn: string
