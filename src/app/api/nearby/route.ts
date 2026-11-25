@@ -179,6 +179,8 @@ export async function GET(req: NextRequest) {
       hasDelivery: s.c.hasDelivery,
       deliveryFee: s.c.deliveryFee,
       deliveryEta: s.c.deliveryEta,
+      phone: s.c.phone,
+      whatsapp: s.c.whatsapp,
       distanceKm: s.distanceKm,
       distanceLabel: formatKm(s.distanceKm, 'ar'),
       distanceLabelEn: formatKm(s.distanceKm, 'en'),
