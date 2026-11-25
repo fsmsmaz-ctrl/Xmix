@@ -277,20 +277,25 @@ const AREA_KEYS = new Set(AREAS.map((a) => a.key))
  * يقبل الأرقام كسلاسل (من الحقول)، يفرض ثنائية lat/lng معاً، يتحقق من
  * مفتاح الولاية ضد السجل، ويحدّ الرسوم والزمن، ويستنتج الولاية من GPS
  * إذا لم تُرسل صراحة. يعيد بيانات نظيفة أو رسالة خطأ ثنائية اللغة.
+ * خيار { allowEmpty: true } يسمح بحمولة بلا حقول موقع (يُدمج معها حقول
+ * أخرى خارج التعقيم الجغرافي مثل بيانات التواصل).
  */
 export function sanitizeGeoUpdate(
   body: unknown,
+  opts?: { allowEmpty?: boolean },
 ): { data: GeoUpdate; error: null } | { data: null; error: string } {
   if (typeof body !== 'object' || body === null) return { data: null, error: 'حمولة غير صالحة | Invalid payload' }
   const b = body as Record<string, unknown>
   const data: GeoUpdate = {}
 
-  /* الإحداثيات — ثنائية دائماً */
+  /* الإحداثيات — ثنائية دائماً. صراحة null معاً = بلا تغيير في الإحداثيات
+     (التاجر الذي لم يضبط موقعه يستطيع حفظ التوصيل والتواصل دون خطأ؛
+     والمسح المتعمد للموقع عبر resetGeo في المسار) */
   const hasLat = b.lat !== undefined
   const hasLng = b.lng !== undefined
   if (hasLat !== hasLng)
     return { data: null, error: 'خط العرض والطول معاً فقط | Send lat & lng together' }
-  if (hasLat && hasLng) {
+  if (hasLat && hasLng && !(b.lat === null && b.lng === null)) {
     const lat = typeof b.lat === 'number' ? b.lat : Number(b.lat)
     const lng = typeof b.lng === 'number' ? b.lng : Number(b.lng)
     if (!validCoords(lat, lng))
@@ -338,7 +343,7 @@ export function sanitizeGeoUpdate(
     }
   }
 
-  if (Object.keys(data).length === 0)
+  if (Object.keys(data).length === 0 && !opts?.allowEmpty)
     return { data: null, error: 'لا حقول موقع لتحديثها | No geo fields to update' }
   return { data, error: null }
 }
