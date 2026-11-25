@@ -38,6 +38,22 @@ export function generateTempPassword(): string {
   return `Xm${out}1!`
 }
 
+export type PhoneSanitizeResult = { ok: true; value: string | null } | { ok: false }
+
+/**
+ * تطبيع رقم هاتف التواصل (الهاتف/واتساب): أرقام و«+» فقط بعد إزالة
+ * المسافات والشرطات والأقواس، بامتداد 8–15 خانة (متوافق E.164).
+ * يعيد null للقيمة الفارغة (= حذف الحقل)، أو ok:false عند الفساد.
+ */
+export function sanitizePhone(v: unknown): PhoneSanitizeResult {
+  if (v === null || v === '') return { ok: true, value: null }
+  if (typeof v !== 'string') return { ok: false }
+  const cleaned = v.trim().replace(/[\s\-().]/g, '')
+  if (!cleaned) return { ok: true, value: null }
+  if (!/^\+?\d{8,15}$/.test(cleaned)) return { ok: false }
+  return { ok: true, value: cleaned }
+}
+
 export interface NewCompanyInput {
   nameAr: string
   nameEn?: string
@@ -133,7 +149,7 @@ export async function grantMerchant(
         cityKey: matchedArea?.key ?? null,
         lat: matchedArea?.lat ?? null,
         lng: matchedArea?.lng ?? null,
-        rating: 4.5,
+        // rating يبدأ 0 (بلا تقييم ملفق) — يُعرض فقط عند وجود مراجعات حقيقية
         isFeatured: false,
         status: 'active',
       },
